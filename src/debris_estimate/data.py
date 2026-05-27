@@ -1,8 +1,8 @@
 """Load dataset from a given csv file path."""
 
-from pathlib import Path
-
 import pandas as pd
+
+from pathlib import Path
 from debris_estimate.logger import Log
 
 log = Log()

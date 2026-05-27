@@ -11,6 +11,7 @@ src/
     metrics.py         # metric formulas
     model.py           # staged XGBoost model only
     outputs.py         # standardized output saving
+    logger.py          # process wide logging
 scripts/
   run_smoke_test.py  # one-clip, one-threshold staged model smoke check
 docs/
