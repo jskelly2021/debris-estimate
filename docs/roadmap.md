@@ -1,15 +1,17 @@
 # Roadmap
 
-## v1 notebook port
+## Core staged model logic
 
 ### Next up
 
-2. Create Data loading module
-    - Load a given dataset and return a pd DataFrame
-3. Preprocessing module
-    - 
-4. 
+3. Basic preprocessing module
+4. Train/Test splitting module
+5. Simple smoke test driver
+6. Core model logic
+7. Metric reporting
+8. Basic outputing
 
 ### Completed
 
 1. Create project skeleton
+2. Create Data loading module
