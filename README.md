@@ -4,12 +4,13 @@
 
 ```text
 src/
-  data.py            # dataset loading
-  preprocessing.py   # features and target clipping
-  splits.py          # train/test splits
-  metrics.py         # metric formulas
-  model.py           # staged XGBoost model only
-  outputs.py         # standardized output saving
+  debris_estimate/
+    data.py            # dataset loading
+    preprocessing.py   # features and target clipping
+    splits.py          # train/test splits
+    metrics.py         # metric formulas
+    model.py           # staged XGBoost model only
+    outputs.py         # standardized output saving
 scripts/
   run_smoke_test.py  # one-clip, one-threshold staged model smoke check
 docs/
@@ -30,5 +31,5 @@ source .venv/bin/activate
 Install dependencies
 
 ```
-pip install pandas numpy matplotlib seaborn scikit-learn xgboost imbalanced-learn openpyxl
+pip install -e .
 ```
