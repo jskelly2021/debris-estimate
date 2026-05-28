@@ -3,6 +3,7 @@
 import pandas as pd
 import numpy as np
 
+from dataclasses import dataclass
 from xgboost import XGBClassifier, XGBRegressor
 from debris_estimate.logger import Log
 from debris_estimate.resample import apply_smote
@@ -27,6 +28,22 @@ XGB_REG_PARAMS_DEFAULT = dict(
     random_state     = 42,
     n_jobs           = -1
 )
+
+
+@dataclass
+class PredictionResults:
+    zero_pos_y_true: pd.Series
+    zero_pos_y_pred: pd.Series
+    zero_pos_y_prob: pd.Series
+    tier_y_true: pd.Series
+    tier_y_pred: pd.Series
+    tier_y_prob: pd.Series
+    low_y_true: pd.Series
+    low_y_pred: pd.Series
+    high_y_true: pd.Series
+    high_y_pred: pd.Series
+    final_y_true: pd.Series
+    final_y_pred: pd.Series
 
 
 def train_zero_vs_positive_classifier(
@@ -131,7 +148,7 @@ def predict_staged_model(
     tier_model,
     low_regressor,
     high_regressor
-):
+) -> PredictionResults:
     final_preds = np.zeros(X.shape[0])
 
     positive_mask = zero_vs_positive_model.predict(X) == 1
@@ -155,4 +172,17 @@ def predict_staged_model(
 
     final_preds[positive_mask] = np.clip(pos_preds, 0, None)
 
-    return final_preds
+    return PredictionResults(
+        zero_pos_y_true=None,
+        zero_pos_y_pred=None,
+        zero_pos_y_prob=None,
+        tier_y_true=None,
+        tier_y_pred=None,
+        tier_y_prob=None,
+        low_y_true=None,
+        low_y_pred=None,
+        high_y_true=None,
+        high_y_pred=None,
+        final_true=None,
+        final_pred=final_preds
+    )

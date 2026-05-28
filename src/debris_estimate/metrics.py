@@ -1,6 +1,8 @@
 """Metrics module for evaluating model performance."""
 
 import numpy as np
+
+from dataclasses import dataclass
 from sklearn.metrics import (
     accuracy_score,
     f1_score,
@@ -11,7 +13,36 @@ from sklearn.metrics import (
     r2_score,
     recall_score,
     root_mean_squared_error,
+    roc_auc_score,
+    average_precision_score,
+    confusion_matrix,
 )
+
+
+@dataclass
+class ClassificationMetrics:
+    accuracy: float
+    precision: float
+    recall: float
+    f1: float
+    roc_auc: float
+    pr_auc: float
+    confusion_matrix: np.ndarray
+
+@dataclass
+class RegressionMetrics:
+    mae: float
+    mse: float
+    rmse: float
+    r2: float
+    nrmse_range: float
+    nrmse_mean: float
+    nrmse_std: float
+    cov: float
+    mape: float
+    ape: float
+    pcc: float
+    msa: float
 
 
 def _to_numpy(y):
@@ -24,46 +55,56 @@ def _safe_divide(numerator, denominator):
 
 # Regression metrics
 def mae(y_true, y_pred):
+    """Mean absolute error."""
     return mean_absolute_error(y_true, y_pred)
 
 
 def mse(y_true, y_pred):
+    """Mean squared error."""
     return mean_squared_error(y_true, y_pred)
 
 
 def rmse(y_true, y_pred):
+    """Root mean squared error."""
     return root_mean_squared_error(y_true, y_pred)
 
 
 def r2(y_true, y_pred):
+    """R-squared."""
     return r2_score(y_true, y_pred)
 
 
 def nrmse_range(y_true, y_pred):
+    """Normalized RMSE by range."""
     y_true = _to_numpy(y_true)
     denominator = np.max(y_true) - np.min(y_true)
     return _safe_divide(rmse(y_true, y_pred), denominator)
 
 
 def nrmse_mean(y_true, y_pred):
+    """Normalized RMSE by mean."""
     y_true = _to_numpy(y_true)
     return _safe_divide(rmse(y_true, y_pred), np.mean(y_true))
 
 
 def nrmse_std(y_true, y_pred):
+    """Normalized RMSE by standard deviation."""
     y_true = _to_numpy(y_true)
     return _safe_divide(rmse(y_true, y_pred), np.std(y_true))
 
 
 def cov(y_true, y_pred):
+    """Covariance"""
     return np.cov(y_true, y_pred)[0, 1]
 
 
 def mape(y_true, y_pred):
+    """Mean absolute percentage error."""
     return mean_absolute_percentage_error(y_true, y_pred)
 
 
-def aggregate_percent_error(y_true, y_pred):
+def ape(y_true, y_pred):
+    """Aggregate percent error."""
     y_true = _to_numpy(y_true)
     y_pred = _to_numpy(y_pred)
 
@@ -71,7 +112,8 @@ def aggregate_percent_error(y_true, y_pred):
     return _safe_divide(np.sum(np.abs(y_true - y_pred)), denominator) * 100
 
 
-def pearson_correlation(y_true, y_pred):
+def pcc(y_true, y_pred):
+    """Pearson correlation coefficient."""
     y_true = _to_numpy(y_true)
     y_pred = _to_numpy(y_pred)
 
@@ -115,3 +157,15 @@ def recall(y_true, y_pred):
 
 def f1(y_true, y_pred):
     return f1_score(y_true, y_pred, zero_division=0)
+
+
+def roc_auc(y_true, y_prob):
+    return roc_auc_score(y_true, y_prob)
+
+
+def pr_auc(y_true, y_prob):
+    return average_precision_score(y_true, y_prob)
+
+
+def confusion(y_true, y_pred):
+    return confusion_matrix(y_true, y_pred)
