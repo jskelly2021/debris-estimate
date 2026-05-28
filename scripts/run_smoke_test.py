@@ -39,7 +39,7 @@ def run_smoke_test(args=None):
 
     zero_vs_positive_model = train_zero_vs_positive_classifier(split.X_train, split.y_train)
 
-
+    
 
 def main() -> int:
     args = parse_args()

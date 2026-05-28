@@ -12,6 +12,7 @@ src/
     model.py           # staged XGBoost model only
     outputs.py         # standardized output saving
     preprocessing.py   # feature preprocessing
+    resample.py        # data resampling: SMOTE
     split.py           # train/test splits
 scripts/
   run_smoke_test.py    # one-clip, one-threshold staged model smoke check
@@ -33,7 +34,6 @@ Stage 2:
 
 Stage 3:
     regress exact amount within low/high tier
-    (NO SMOTE)
 ```
 
 ## Setup
