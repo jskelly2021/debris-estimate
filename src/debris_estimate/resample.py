@@ -9,20 +9,27 @@ from debris_estimate.logger import Log
 log = Log()
 
 
-def apply_smote(X: pd.DataFrame, y: pd.Series):
+def apply_smote(
+    X: pd.DataFrame,
+    y: pd.Series,
+    k_neighbors: int = 5
+):
+    counts = y.value_counts()
+    min_count = counts.min()
 
-    before_pos = int((y == 1).sum())
-    before_neg = int((y == 0).sum())
-
-    if before_pos < 2 or before_neg < 2:
-        log.warn("Skipping SMOTE: not enough minority samples.")
+    if len(counts) < 2 or min_count <= k_neighbors:
+        log.warn(
+            "Skipping SMOTE: minority class has %s samples, need at least %s.",
+            min_count,
+            k_neighbors + 1
+        )
         return X, y
 
-    log.info("Applying SMOTE. Class distribution before: %s", {0: before_neg, 1: before_pos})
+    log.info("Applying SMOTE. Class distribution before: %s", counts.to_dict())
 
     smote = SMOTE(random_state=42)
     X_resampled, y_resampled = smote.fit_resample(X, y)
 
-    log.info(f"Resampled class distribution: {pd.Series(y_resampled).value_counts().to_dict()})")
+    log.info("Resampled class distribution: %s", pd.Series(y_resampled).value_counts().to_dict())
 
     return X_resampled, y_resampled
