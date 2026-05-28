@@ -1,12 +1,16 @@
 """Simple smoke test for staged_model. Performs a single run of the model."""
 
 import argparse
+import pandas as pd
+import numpy as np
 
 from pathlib import Path
 from debris_estimate.logger import setup_logger, Log
 from debris_estimate.data import load_dataset
 from debris_estimate.preprocessing import preprocess_features
-from debris_estimate.split import split_data, Split
+from debris_estimate.split import split_data
+from debris_estimate.model import train_staged_model, predict_staged_model
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -30,6 +34,19 @@ def run_smoke_test(args=None):
     log.info("Preprocessed data shape: %s", df.shape)
 
     split = split_data(X, y, test_size=0.2, random_state=42)
+
+    zero_vs_positive_model, tier_model, low_regressor, high_regressor = train_staged_model(split, threshold=300)
+
+    preds = predict_staged_model(
+        split.X_test,
+        zero_vs_positive_model,
+        tier_model,
+        low_regressor,
+        high_regressor
+    )
+
+    preds_summary = pd.Series(preds).describe()
+    log.info("Predictions summary:\n%s", preds_summary)
 
 
 def main() -> int:
