@@ -6,6 +6,7 @@
 src/
   debris_estimate/
     data.py            # dataset loading
+    evaluation.py      # model evaluation
     logger.py          # process wide logging
     metrics.py         # metric formulas
     model.py           # staged XGBoost model only
@@ -18,6 +19,21 @@ docs/
   experiments.md       # future experiment ideas and notes
   roadmap.md           # implementation direction
 notebooks/             # legacy; core logic extracted
+```
+
+## Pipeline
+```text
+Stage 1:
+    classify zero vs positive
+    (SMOTE applied)
+
+Stage 2:
+    among positives, classify low vs high
+    (SMOTE applied)
+
+Stage 3:
+    regress exact amount within low/high tier
+    (NO SMOTE)
 ```
 
 ## Setup
