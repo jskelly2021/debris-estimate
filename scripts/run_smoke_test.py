@@ -6,7 +6,8 @@ import argparse
 from pathlib import Path
 from debris_estimate.logger import setup_logger, Log
 from debris_estimate.data import load_dataset
-from debris_estimate.preprocessing import preprocess_data
+from debris_estimate.preprocessing import preprocess_features
+from debris_estimate.split import split_data, Split
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -24,9 +25,12 @@ def run_smoke_test(args=None):
     data_path = PROJECT_ROOT / args.data_path
 
     df = load_dataset(data_path)
-    df = preprocess_data(df)
+    X = preprocess_features(df)
+    y = df["VolBoth_sum"]
 
-    log.info("Smoke test ran successfully with preprocessed data shape: %s", df.shape)
+    split = split_data(X, y, test_size=0.2, random_state=42)
+
+    log.info("Preprocessed data shape: %s", df.shape)
 
 
 def main() -> int:

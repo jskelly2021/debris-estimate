@@ -1,4 +1,4 @@
-"""owns the logic for turning a dataframe into model-ready inputs."""
+"""owns the logic for processing features."""
 
 import pandas as pd
 import numpy as np
@@ -17,6 +17,7 @@ class PreprocessConfig:
     distance_cols: list[str] = field(default_factory=list)
 
 
+# Default config based on h9_debrisv5 dataset.
 DEFAULT_PREPROCESS_CONFIG = PreprocessConfig(
     drop_cols = [
         "VolCD","VolVG","VolCD_sum","VolVG_sum","VolBoth_sum",
@@ -57,8 +58,11 @@ def _one_hot_encode_columns(df, columns, drop_first=True) -> pd.DataFrame:
     return df
 
 
-def preprocess_data(df, config: PreprocessConfig = DEFAULT_PREPROCESS_CONFIG) -> pd.DataFrame:
-    log.info("Starting data preprocessing.")
+def preprocess_features(
+    df: pd.DataFrame,
+    config: PreprocessConfig = DEFAULT_PREPROCESS_CONFIG
+) -> pd.DataFrame:
+    log.info("Starting data preprocessing...")
     df = df.copy()
 
     df = _remove_leakage_columns(df, config.drop_cols)

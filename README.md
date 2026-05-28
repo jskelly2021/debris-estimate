@@ -6,8 +6,8 @@
 src/
   debris_estimate/
     data.py            # dataset loading
-    preprocessing.py   # features and target clipping
-    splits.py          # train/test splits
+    preprocessing.py   # feature preprocessing
+    split.py           # train/test splits
     metrics.py         # metric formulas
     model.py           # staged XGBoost model only
     outputs.py         # standardized output saving

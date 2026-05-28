@@ -3,7 +3,7 @@
 ## Prelims
 1. Tiered threshold sweep
 2. Clipping sweep
-3. Minor
+3. Minor hyperparam sweep
 
 1. Change the training/test ratios to 0.9:0.1, 0.85:0.15, and 0.95:0.05.
 2. Include all three types of NRMSE in the model evaluation:
