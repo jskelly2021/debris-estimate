@@ -1,0 +1,15 @@
+[project]
+name = "debris-estimate"
+version = "0.1.0"
+dependencies = [
+  "pandas",
+  "numpy",
+  "matplotlib",
+  "seaborn",
+  "scikit-learn",
+  "xgboost",
+  "imbalanced-learn",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

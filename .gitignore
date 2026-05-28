@@ -1,9 +1,14 @@
 .DS_Store
 .vscode/
 
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
 .venv/
-**/__pycache__/
 
-out/
+# Project specific
+outputs/
 data/
-tests/
