@@ -1,6 +1,5 @@
 """Simple smoke test for staged_model. Performs a single run of the model."""
 
-import sys
 import argparse
 
 from pathlib import Path
@@ -28,9 +27,11 @@ def run_smoke_test(args=None):
     X = preprocess_features(df)
     y = df["VolBoth_sum"]
 
+    log.info("Preprocessed data shape: %s", df.shape)
+
     split = split_data(X, y, test_size=0.2, random_state=42)
 
-    log.info("Preprocessed data shape: %s", df.shape)
+    
 
 
 def main() -> int:

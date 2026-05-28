@@ -6,18 +6,18 @@
 src/
   debris_estimate/
     data.py            # dataset loading
-    preprocessing.py   # feature preprocessing
-    split.py           # train/test splits
+    logger.py          # process wide logging
     metrics.py         # metric formulas
     model.py           # staged XGBoost model only
     outputs.py         # standardized output saving
-    logger.py          # process wide logging
+    preprocessing.py   # feature preprocessing
+    split.py           # train/test splits
 scripts/
-  run_smoke_test.py  # one-clip, one-threshold staged model smoke check
+  run_smoke_test.py    # one-clip, one-threshold staged model smoke check
 docs/
-  experiments.md     # future experiment ideas and notes
-  roadmap.md         # implementation direction
-notebooks/           # legacy; core logic extracted
+  experiments.md       # future experiment ideas and notes
+  roadmap.md           # implementation direction
+notebooks/             # legacy; core logic extracted
 ```
 
 ## Setup
