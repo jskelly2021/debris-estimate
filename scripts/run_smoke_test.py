@@ -31,8 +31,6 @@ def run_smoke_test(args=None):
 
     split = split_data(X, y, test_size=0.2, random_state=42)
 
-    
-
 
 def main() -> int:
     args = parse_args()
