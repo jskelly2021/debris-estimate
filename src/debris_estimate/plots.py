@@ -43,17 +43,49 @@ def save_confusion_matrix(
 
 
 def save_roc_curve(
-    roc_curve: pd.DataFrame,
-    output_dir: Path
-):
-    pass
+    y_true: pd.Series,
+    y_prob: pd.Series,
+    output_path: Path,
+    title: str = "ROC Curve",
+) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    fig, ax = plt.subplots(figsize=(6, 5))
+
+    RocCurveDisplay.from_predictions(
+        y_true,
+        y_prob,
+        ax=ax,
+    )
+
+    ax.set_title(title)
+
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=300, bbox_inches="tight")
+    plt.close(fig)
 
 
 def save_pr_curve(
-    pr_curve: pd.DataFrame,
-    output_dir: Path
-):
-    pass
+    y_true: pd.Series,
+    y_prob: pd.Series,
+    output_path: Path,
+    title: str = "Precision-Recall Curve",
+) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    fig, ax = plt.subplots(figsize=(6, 5))
+
+    PrecisionRecallDisplay.from_predictions(
+        y_true,
+        y_prob,
+        ax=ax,
+    )
+
+    ax.set_title(title)
+
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=300, bbox_inches="tight")
+    plt.close(fig)
 
 
 def save_actual_vs_predicted(
@@ -61,7 +93,7 @@ def save_actual_vs_predicted(
     y_pred: pd.Series,
     output_path: Path,
     title: str = "Actual vs Predicted"
-):
+) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     fig, ax = plt.subplots(figsize=(6, 6))
@@ -82,26 +114,15 @@ def save_actual_vs_predicted(
     plt.close(fig)
 
 
-def save_residual_plot(
+def save_residual(
     y_true: pd.Series,
     y_pred: pd.Series,
     output_dir: Path
-):
+) -> None:
     pass
 
 
-def save_all_plots(
-    y_true: pd.Series,
-    preds: PredictionResults,
-    eval: EvaluationResults,
-    output_dir: Path
-):
-    plots_dir = output_dir / PLOT_DIR
-
-    y_low_true, y_low_pred = preds.low_pairs(y_true)
-    y_high_true, y_high_pred = preds.high_pairs(y_true)
-    y_reg_true, y_reg_pred = preds.reg_pairs(y_true)
-
+def save_confusion_plots(eval: EvaluationResults, plots_dir: Path) -> None:
     # Zero vs Positive Confusion Matrix
     save_confusion_matrix(
         confusion_matrix=eval.zero_pos_classifier_metrics.confusion_matrix,
@@ -118,6 +139,48 @@ def save_all_plots(
         title="Tier Confusion Matrix"
     )
 
+
+def save_classification_curve_plots(y_true: pd.Series, preds: PredictionResults, threshold: float, plots_dir: Path) -> None:
+    y_tier_true, _, y_tier_prob = preds.tier_pairs(y_true)
+
+    # Zero vs Positive ROC Curve
+    save_roc_curve(
+        y_true=(y_true > 0).astype(int),
+        y_prob=preds.zero_pos_prob,
+        output_path=plots_dir / CLASSIFICATION_CURVE_PLOT_DIR / "zero_pos_roc.png",
+        title="Zero vs Positive ROC Curve",
+    )
+
+    # Tier ROC Curve
+    save_roc_curve(
+        y_true=(y_tier_true > threshold).astype(int),
+        y_prob=y_tier_prob,
+        output_path=plots_dir / CLASSIFICATION_CURVE_PLOT_DIR / "tier_roc.png",
+        title="Tier ROC Curve",
+    )
+
+    # Zero vs Positive Precision-Recall Curve
+    save_pr_curve(
+        y_true=(y_true > 0).astype(int),
+        y_prob=preds.zero_pos_prob,
+        output_path=plots_dir / CLASSIFICATION_CURVE_PLOT_DIR / "zero_pos_pr.png",
+        title="Zero vs Positive Precision-Recall Curve",
+    )
+
+    # Tier Precision-Recall Curve
+    save_pr_curve(
+        y_true=(y_tier_true > threshold).astype(int),
+        y_prob=y_tier_prob,
+        output_path=plots_dir / CLASSIFICATION_CURVE_PLOT_DIR / "tier_pr.png",
+        title="Tier Precision-Recall Curve",
+    )
+
+
+def save_actual_vs_predicted_plots(y_true: pd.Series, preds: PredictionResults, plots_dir: Path) -> None:
+    y_low_true, y_low_pred = preds.low_pairs(y_true)
+    y_high_true, y_high_pred = preds.high_pairs(y_true)
+    y_reg_true, y_reg_pred = preds.reg_pairs(y_true)
+    
     # System Actual vs Predicted
     save_actual_vs_predicted(
         y_true=y_true,
@@ -149,3 +212,17 @@ def save_all_plots(
         output_path=plots_dir / ACTUAL_VS_PREDICTED_PLOT_DIR / "reg_actual_vs_pred.png",
         title="Full Regression Actual vs Predicted"
     )
+
+
+def save_all_plots(
+    y_true: pd.Series,
+    preds: PredictionResults,
+    eval: EvaluationResults,
+    threshold: float,
+    output_dir: Path
+) -> None:
+    plots_dir = output_dir / PLOT_DIR
+
+    save_confusion_plots(eval, plots_dir)
+    save_classification_curve_plots(y_true, preds, threshold, plots_dir)
+    save_actual_vs_predicted_plots(y_true, preds, plots_dir)

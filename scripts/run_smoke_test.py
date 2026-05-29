@@ -48,9 +48,24 @@ def run_smoke_test(args=None):
     model_eval = evaluate_system(split.y_test, preds, threshold=300)
 
     output_dir = create_output_dir(OUTPUT_DIR, run_name="smoke_test")
+
     log.info(f"Saving run outputs to {output_dir}...")
-    save_run_outputs(model_eval, preds, split.y_test, output_dir, write_predictions=True)
-    save_all_plots(split.y_test, preds, model_eval, output_dir)
+
+    save_run_outputs(
+        eval=model_eval,
+        preds=preds,
+        y_true=split.y_test,
+        output_dir=output_dir,
+        write_predictions=True
+    )
+
+    save_all_plots(
+        y_true=split.y_test,
+        preds=preds,
+        eval=model_eval,
+        threshold=300,
+        output_dir=output_dir
+    )
 
 
 def main() -> int:
