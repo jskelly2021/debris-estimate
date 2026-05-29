@@ -4,6 +4,21 @@
 
 A modular machine learning pipeline for estimating post-disaster debris volume using staged classification and regression models on geospatial and structural data.
 
+## Setup
+
+Create a python virtual environment
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Install dependencies
+
+```bash
+pip install -e .
+```
+
 ## Project Structure
 
 The repository is structured to separate preprocessing, splitting, modeling, evaluation, plotting, and experiment scripts into reusable modules under `src/`.
@@ -108,17 +123,18 @@ Stage-specific predictions are mainly used for diagnostics:
 * Use `high_pred` only on rows routed to the high regressor.
 * Use `reg_pred` only on rows routed to either regressor.
 
-## Setup
+## Outputs
 
-Create a python virtual environment
+Model runs write standardized artifacts under `outputs/`.
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
+```text
+outputs/
+  smoke_test/
+    metrics.json
+    predictions.csv
 ```
 
-Install dependencies
-
-```bash
-pip install -e .
-```
+| File              | Description                                                                                                                                                                                                 |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `metrics.json`    | Stores the full `EvaluationResults` object, including system, classifier, and regressor metrics. JSON is used because it supports structured, nested run-level evaluation results.                          |
+| `predictions.csv` | Stores one row per sample containing the ground-truth target, final prediction, and stage-specific predictions from the staged model. CSV is used for sample-level prediction data and downstream analysis. |
