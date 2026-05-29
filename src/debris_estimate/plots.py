@@ -128,7 +128,10 @@ def _save_residual(
     plt.close(fig)
 
 
-def save_confusion_plots(eval: EvaluationResults, confusion_path: Path) -> None:
+def save_confusion_plots(
+    eval: EvaluationResults,
+    confusion_path: Path
+) -> None:
     # Zero vs Positive Confusion Matrix
     _save_confusion_matrix(
         confusion_matrix=eval.zero_pos_classifier_metrics.confusion_matrix,
@@ -138,31 +141,27 @@ def save_confusion_plots(eval: EvaluationResults, confusion_path: Path) -> None:
     )
 
     # Tier Confusion Matrix
-    _save_confusion_matrix(
-        confusion_matrix=eval.tier_classifier_metrics.confusion_matrix,
-        output_path=confusion_path / "tier_confusion.png",
-        labels=["Low", "High"],
-        title="Tier Confusion Matrix"
-    )
+    if eval.tier_classifier_metrics.confusion_matrix.size > 0:
+        _save_confusion_matrix(
+            confusion_matrix=eval.tier_classifier_metrics.confusion_matrix,
+            output_path=confusion_path / "tier_confusion.png",
+            labels=["Low", "High"],
+            title="Tier Confusion Matrix"
+        )
 
 
-def save_classification_curve_plots(y_true: pd.Series, preds: PredictionResults, threshold: float, classification_curve_path: Path) -> None:
-    y_tier_true, _, y_tier_prob = preds.tier_pairs(y_true)
-
+def save_classification_curve_plots(
+    y_true: pd.Series,
+    preds: PredictionResults,
+    threshold: float,
+    classification_curve_path: Path
+) -> None:
     # Zero vs Positive ROC Curve
     _save_roc_curve(
         y_true=(y_true > 0).astype(int),
         y_prob=preds.zero_pos_prob,
         output_path=classification_curve_path / "zero_pos_roc.png",
         title="Zero vs Positive ROC Curve",
-    )
-
-    # Tier ROC Curve
-    _save_roc_curve(
-        y_true=(y_tier_true > threshold).astype(int),
-        y_prob=y_tier_prob,
-        output_path=classification_curve_path / "tier_roc.png",
-        title="Tier ROC Curve",
     )
 
     # Zero vs Positive Precision-Recall Curve
@@ -173,16 +172,35 @@ def save_classification_curve_plots(y_true: pd.Series, preds: PredictionResults,
         title="Zero vs Positive Precision-Recall Curve",
     )
 
+    y_tier_true, _, y_tier_prob = preds.tier_pairs(y_true)
+
+    if y_tier_true.empty or y_tier_true.nunique() < 2:
+        return
+
+    tier_true = (y_tier_true > threshold).astype(int)
+
+    # Tier ROC Curve
+    _save_roc_curve(
+        y_true=tier_true,
+        y_prob=y_tier_prob,
+        output_path=classification_curve_path / "tier_roc.png",
+        title="Tier ROC Curve",
+    )
+
     # Tier Precision-Recall Curve
     _save_pr_curve(
-        y_true=(y_tier_true > threshold).astype(int),
+        y_true=tier_true,
         y_prob=y_tier_prob,
         output_path=classification_curve_path / "tier_pr.png",
         title="Tier Precision-Recall Curve",
     )
 
 
-def save_actual_vs_predicted_plots(y_true: pd.Series, preds: PredictionResults, actual_vs_pred_path: Path) -> None:
+def save_actual_vs_predicted_plots(
+    y_true: pd.Series,
+    preds: PredictionResults,
+    actual_vs_pred_path: Path
+) -> None:
     y_low_true, y_low_pred = preds.low_pairs(y_true)
     y_high_true, y_high_pred = preds.high_pairs(y_true)
     y_reg_true, y_reg_pred = preds.reg_pairs(y_true)
@@ -220,7 +238,11 @@ def save_actual_vs_predicted_plots(y_true: pd.Series, preds: PredictionResults, 
     )
 
 
-def save_residual_plots(y_true: pd.Series, preds: PredictionResults, residual_path: Path) -> None:
+def save_residual_plots(
+    y_true: pd.Series,
+    preds: PredictionResults,
+    residual_path: Path
+) -> None:
     y_low_true, y_low_pred = preds.low_pairs(y_true)
     y_high_true, y_high_pred = preds.high_pairs(y_true)
     y_reg_true, y_reg_pred = preds.reg_pairs(y_true)
