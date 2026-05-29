@@ -81,6 +81,32 @@ During prediction, the model routes each row through the stages:
 5. Regressor predictions are converted back from log space using `expm1`.
 6. Negative predictions are clipped to `0`.
 
+### Prediction Results
+
+`predict_staged_model` returns a `PredictionResults` object containing the outputs from each stage of the model. All prediction arrays are the same length as the input `X`.
+
+Rows that do not pass through a later model stage are stored as `NaN`. The only exception is `final_pred`, which always contains a usable end-to-end prediction.
+
+| Field           | Meaning                                                                                                                                |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `zero_pos_pred` | Zero-vs-positive class prediction for every row. `0` means predicted zero debris, `1` means predicted positive debris.                 |
+| `zero_pos_prob` | Probability that each row has positive debris volume.                                                                                  |
+| `tier_pred`     | Low-vs-high tier prediction for rows predicted positive by the zero-vs-positive classifier. `NaN` for predicted-zero rows.             |
+| `tier_prob`     | Probability that a predicted-positive row belongs to the high tier. `NaN` for predicted-zero rows.                                     |
+| `low_pred`      | Low-regressor prediction for rows routed to the low regressor. `NaN` otherwise.                                                        |
+| `high_pred`     | High-regressor prediction for rows routed to the high regressor. `NaN` otherwise.                                                      |
+| `reg_pred`      | Combined low/high regressor prediction for rows routed to either regressor. `NaN` for predicted-zero rows.                             |
+| `final_pred`    | Final debris volume prediction for every row. Predicted-zero rows receive `0`; predicted-positive rows receive their `reg_pred` value. |
+
+The intended evaluation output for the full staged system is `final_pred`.
+
+Stage-specific predictions are mainly used for diagnostics:
+
+* Use `zero_pos_pred` and `zero_pos_prob` to evaluate the zero-vs-positive classifier.
+* Use `tier_pred` and `tier_prob` only on rows where `zero_pos_pred == 1`.
+* Use `low_pred` only on rows routed to the low regressor.
+* Use `high_pred` only on rows routed to the high regressor.
+* Use `reg_pred` only on rows routed to either regressor.
 
 ## Setup
 
