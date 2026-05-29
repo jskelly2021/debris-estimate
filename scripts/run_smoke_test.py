@@ -2,9 +2,9 @@
 
 import argparse
 import pandas as pd
-import numpy as np
 
 from pathlib import Path
+from debris_estimate.evaluation import evaluate_system
 from debris_estimate.logger import setup_logger, Log
 from debris_estimate.data import load_dataset
 from debris_estimate.preprocessing import preprocess_features
@@ -45,8 +45,9 @@ def run_smoke_test(args=None):
         high_regressor
     )
 
-    preds_summary = pd.Series(preds).describe()
-    log.info("Predictions summary:\n%s", preds_summary)
+    model_eval = evaluate_system(split.y_test, preds, threshold=300)
+
+    
 
 
 def main() -> int:
