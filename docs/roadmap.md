@@ -5,6 +5,7 @@
 ### Next up
 
 11. Clipping support
+12. Config support
 
 ### Completed
 
