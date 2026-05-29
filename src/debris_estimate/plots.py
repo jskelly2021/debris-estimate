@@ -1,25 +1,15 @@
 """Save model evaluation plots."""
 
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn.metrics import ConfusionMatrixDisplay, RocCurveDisplay, PrecisionRecallDisplay
 from pathlib import Path
-from debris_estimate.logger import Log
 from debris_estimate.evaluation import EvaluationResults
 from debris_estimate.model import PredictionResults
 
-log = Log()
 
-PLOT_DIR = "plots"
-CONFUSION_MATRIX_PLOT_DIR = "confusion"
-CLASSIFICATION_CURVE_PLOT_DIR = "classification_curves"
-ACTUAL_VS_PREDICTED_PLOT_DIR = "actual_vs_pred"
-RESIDUAL_PLOT_DIR = "residuals"
-
-
-def save_confusion_matrix(
+def _save_confusion_matrix(
     confusion_matrix: pd.DataFrame,
     output_path: Path,
     labels: list[str] | None = None,
@@ -42,7 +32,7 @@ def save_confusion_matrix(
     plt.close(fig)
 
 
-def save_roc_curve(
+def _save_roc_curve(
     y_true: pd.Series,
     y_prob: pd.Series,
     output_path: Path,
@@ -65,7 +55,7 @@ def save_roc_curve(
     plt.close(fig)
 
 
-def save_pr_curve(
+def _save_pr_curve(
     y_true: pd.Series,
     y_prob: pd.Series,
     output_path: Path,
@@ -88,7 +78,7 @@ def save_pr_curve(
     plt.close(fig)
 
 
-def save_actual_vs_predicted(
+def _save_actual_vs_predicted(
     y_true: pd.Series,
     y_pred: pd.Series,
     output_path: Path,
@@ -114,7 +104,7 @@ def save_actual_vs_predicted(
     plt.close(fig)
 
 
-def save_residual(
+def _save_residual(
     y_true: pd.Series,
     y_pred: pd.Series,
     output_path: Path,
@@ -138,146 +128,131 @@ def save_residual(
     plt.close(fig)
 
 
-def save_confusion_plots(eval: EvaluationResults, plots_dir: Path) -> None:
+def save_confusion_plots(eval: EvaluationResults, confusion_path: Path) -> None:
     # Zero vs Positive Confusion Matrix
-    save_confusion_matrix(
+    _save_confusion_matrix(
         confusion_matrix=eval.zero_pos_classifier_metrics.confusion_matrix,
-        output_path=plots_dir / CONFUSION_MATRIX_PLOT_DIR / "zero_pos_confusion.png",
+        output_path=confusion_path / "zero_pos_confusion.png",
         labels=["Zero", "Positive"],
         title="Zero vs Positive Confusion Matrix"
     )
 
     # Tier Confusion Matrix
-    save_confusion_matrix(
+    _save_confusion_matrix(
         confusion_matrix=eval.tier_classifier_metrics.confusion_matrix,
-        output_path=plots_dir / CONFUSION_MATRIX_PLOT_DIR / "tier_confusion.png",
+        output_path=confusion_path / "tier_confusion.png",
         labels=["Low", "High"],
         title="Tier Confusion Matrix"
     )
 
 
-def save_classification_curve_plots(y_true: pd.Series, preds: PredictionResults, threshold: float, plots_dir: Path) -> None:
+def save_classification_curve_plots(y_true: pd.Series, preds: PredictionResults, threshold: float, classification_curve_path: Path) -> None:
     y_tier_true, _, y_tier_prob = preds.tier_pairs(y_true)
 
     # Zero vs Positive ROC Curve
-    save_roc_curve(
+    _save_roc_curve(
         y_true=(y_true > 0).astype(int),
         y_prob=preds.zero_pos_prob,
-        output_path=plots_dir / CLASSIFICATION_CURVE_PLOT_DIR / "zero_pos_roc.png",
+        output_path=classification_curve_path / "zero_pos_roc.png",
         title="Zero vs Positive ROC Curve",
     )
 
     # Tier ROC Curve
-    save_roc_curve(
+    _save_roc_curve(
         y_true=(y_tier_true > threshold).astype(int),
         y_prob=y_tier_prob,
-        output_path=plots_dir / CLASSIFICATION_CURVE_PLOT_DIR / "tier_roc.png",
+        output_path=classification_curve_path / "tier_roc.png",
         title="Tier ROC Curve",
     )
 
     # Zero vs Positive Precision-Recall Curve
-    save_pr_curve(
+    _save_pr_curve(
         y_true=(y_true > 0).astype(int),
         y_prob=preds.zero_pos_prob,
-        output_path=plots_dir / CLASSIFICATION_CURVE_PLOT_DIR / "zero_pos_pr.png",
+        output_path=classification_curve_path / "zero_pos_pr.png",
         title="Zero vs Positive Precision-Recall Curve",
     )
 
     # Tier Precision-Recall Curve
-    save_pr_curve(
+    _save_pr_curve(
         y_true=(y_tier_true > threshold).astype(int),
         y_prob=y_tier_prob,
-        output_path=plots_dir / CLASSIFICATION_CURVE_PLOT_DIR / "tier_pr.png",
+        output_path=classification_curve_path / "tier_pr.png",
         title="Tier Precision-Recall Curve",
     )
 
 
-def save_actual_vs_predicted_plots(y_true: pd.Series, preds: PredictionResults, plots_dir: Path) -> None:
+def save_actual_vs_predicted_plots(y_true: pd.Series, preds: PredictionResults, actual_vs_pred_path: Path) -> None:
     y_low_true, y_low_pred = preds.low_pairs(y_true)
     y_high_true, y_high_pred = preds.high_pairs(y_true)
     y_reg_true, y_reg_pred = preds.reg_pairs(y_true)
     
     # System Actual vs Predicted
-    save_actual_vs_predicted(
+    _save_actual_vs_predicted(
         y_true=y_true,
         y_pred=preds.final_pred,
-        output_path=plots_dir / ACTUAL_VS_PREDICTED_PLOT_DIR / "system_actual_vs_pred.png",
+        output_path=actual_vs_pred_path / "system_actual_vs_pred.png",
         title="System Actual vs Predicted"
     )
 
     # Low Tier Actual vs Predicted
-    save_actual_vs_predicted(
+    _save_actual_vs_predicted(
         y_true=y_low_true,
         y_pred=y_low_pred,
-        output_path=plots_dir / ACTUAL_VS_PREDICTED_PLOT_DIR / "low_actual_vs_pred.png",
+        output_path=actual_vs_pred_path / "low_actual_vs_pred.png",
         title="Low Tier Actual vs Predicted"
     )
 
     # High Tier Actual vs Predicted
-    save_actual_vs_predicted(
+    _save_actual_vs_predicted(
         y_true=y_high_true,
         y_pred=y_high_pred,
-        output_path=plots_dir / ACTUAL_VS_PREDICTED_PLOT_DIR / "high_actual_vs_pred.png",
+        output_path=actual_vs_pred_path / "high_actual_vs_pred.png",
         title="High Tier Actual vs Predicted"
     )
 
     # Full Regression Actual vs Predicted
-    save_actual_vs_predicted(
+    _save_actual_vs_predicted(
         y_true=y_reg_true,
         y_pred=y_reg_pred,
-        output_path=plots_dir / ACTUAL_VS_PREDICTED_PLOT_DIR / "reg_actual_vs_pred.png",
+        output_path=actual_vs_pred_path / "reg_actual_vs_pred.png",
         title="Full Regression Actual vs Predicted"
     )
 
 
-def save_residual_plots(y_true: pd.Series, preds: PredictionResults, plots_dir: Path) -> None:
+def save_residual_plots(y_true: pd.Series, preds: PredictionResults, residual_path: Path) -> None:
     y_low_true, y_low_pred = preds.low_pairs(y_true)
     y_high_true, y_high_pred = preds.high_pairs(y_true)
     y_reg_true, y_reg_pred = preds.reg_pairs(y_true)
 
     # System Residual Plot
-    save_residual(
+    _save_residual(
         y_true=y_true,
         y_pred=preds.final_pred,
-        output_path=plots_dir / RESIDUAL_PLOT_DIR / "system_residual.png",
+        output_path=residual_path / "system_residual.png",
         title="System Residual Plot"
     )
 
     # Low Tier Residual Plot
-    save_residual(
+    _save_residual(
         y_true=y_low_true,
         y_pred=y_low_pred,
-        output_path=plots_dir / RESIDUAL_PLOT_DIR / "low_residual.png",
+        output_path=residual_path / "low_residual.png",
         title="Low Tier Residual Plot"
     )
 
     # High Tier Residual Plot
-    save_residual(
+    _save_residual(
         y_true=y_high_true,
         y_pred=y_high_pred,
-        output_path=plots_dir / RESIDUAL_PLOT_DIR / "high_residual.png",
+        output_path=residual_path / "high_residual.png",
         title="High Tier Residual Plot"
     )
 
     # Full Regression Residual Plot
-    save_residual(
+    _save_residual(
         y_true=y_reg_true,
         y_pred=y_reg_pred,
-        output_path=plots_dir / RESIDUAL_PLOT_DIR / "reg_residual.png",
+        output_path=residual_path / "reg_residual.png",
         title="Full Regression Residual Plot"
     )
-
-
-def save_all_plots(
-    y_true: pd.Series,
-    preds: PredictionResults,
-    eval: EvaluationResults,
-    threshold: float,
-    output_dir: Path
-) -> None:
-    plots_dir = output_dir / PLOT_DIR
-
-    save_confusion_plots(eval, plots_dir)
-    save_classification_curve_plots(y_true, preds, threshold, plots_dir)
-    save_actual_vs_predicted_plots(y_true, preds, plots_dir)
-    save_residual_plots(y_true, preds, plots_dir)

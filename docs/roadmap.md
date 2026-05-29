@@ -4,7 +4,6 @@
 
 ### Next up
 
-10. Plotting
 11. Clipping support
 
 ### Completed
@@ -18,3 +17,4 @@
 7. Metric reporting
 8. Model evaluation logic
 9. Standardize output
+10. Plotting

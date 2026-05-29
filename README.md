@@ -132,9 +132,11 @@ outputs/
   smoke_test/
     metrics.json
     predictions.csv
+    plots/
 ```
 
 | File              | Description                                                                                                                                                                                                 |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `metrics.json`    | Stores the full `EvaluationResults` object, including system, classifier, and regressor metrics. JSON is used because it supports structured, nested run-level evaluation results.                          |
 | `predictions.csv` | Stores one row per sample containing the ground-truth target, final prediction, and stage-specific predictions from the staged model. CSV is used for sample-level prediction data and downstream analysis. |
+| `plots/`           | Generated visualizations used for model evaluation and diagnostics, including regression and classification performance plots. |
