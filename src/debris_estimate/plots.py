@@ -117,9 +117,25 @@ def save_actual_vs_predicted(
 def save_residual(
     y_true: pd.Series,
     y_pred: pd.Series,
-    output_dir: Path
+    output_path: Path,
+    title: str = "Residual Plot",
 ) -> None:
-    pass
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    residuals = y_true - y_pred
+
+    fig, ax = plt.subplots(figsize=(6, 5))
+
+    ax.scatter(y_pred, residuals, alpha=0.6)
+    ax.axhline(0, linestyle="--")
+
+    ax.set_title(title)
+    ax.set_xlabel("Predicted")
+    ax.set_ylabel("Residual (Actual - Predicted)")
+
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=300, bbox_inches="tight")
+    plt.close(fig)
 
 
 def save_confusion_plots(eval: EvaluationResults, plots_dir: Path) -> None:
@@ -214,6 +230,44 @@ def save_actual_vs_predicted_plots(y_true: pd.Series, preds: PredictionResults, 
     )
 
 
+def save_residual_plots(y_true: pd.Series, preds: PredictionResults, plots_dir: Path) -> None:
+    y_low_true, y_low_pred = preds.low_pairs(y_true)
+    y_high_true, y_high_pred = preds.high_pairs(y_true)
+    y_reg_true, y_reg_pred = preds.reg_pairs(y_true)
+
+    # System Residual Plot
+    save_residual(
+        y_true=y_true,
+        y_pred=preds.final_pred,
+        output_path=plots_dir / RESIDUAL_PLOT_DIR / "system_residual.png",
+        title="System Residual Plot"
+    )
+
+    # Low Tier Residual Plot
+    save_residual(
+        y_true=y_low_true,
+        y_pred=y_low_pred,
+        output_path=plots_dir / RESIDUAL_PLOT_DIR / "low_residual.png",
+        title="Low Tier Residual Plot"
+    )
+
+    # High Tier Residual Plot
+    save_residual(
+        y_true=y_high_true,
+        y_pred=y_high_pred,
+        output_path=plots_dir / RESIDUAL_PLOT_DIR / "high_residual.png",
+        title="High Tier Residual Plot"
+    )
+
+    # Full Regression Residual Plot
+    save_residual(
+        y_true=y_reg_true,
+        y_pred=y_reg_pred,
+        output_path=plots_dir / RESIDUAL_PLOT_DIR / "reg_residual.png",
+        title="Full Regression Residual Plot"
+    )
+
+
 def save_all_plots(
     y_true: pd.Series,
     preds: PredictionResults,
@@ -226,3 +280,4 @@ def save_all_plots(
     save_confusion_plots(eval, plots_dir)
     save_classification_curve_plots(y_true, preds, threshold, plots_dir)
     save_actual_vs_predicted_plots(y_true, preds, plots_dir)
+    save_residual_plots(y_true, preds, plots_dir)
