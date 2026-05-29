@@ -10,6 +10,7 @@ from debris_estimate.preprocessing import preprocess_features
 from debris_estimate.split import split_data
 from debris_estimate.model import train_staged_model, predict_staged_model
 from debris_estimate.outputs import create_output_dir, save_run_outputs
+from debris_estimate.plots import save_all_plots
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -49,6 +50,7 @@ def run_smoke_test(args=None):
     output_dir = create_output_dir(OUTPUT_DIR, run_name="smoke_test")
     log.info(f"Saving run outputs to {output_dir}...")
     save_run_outputs(model_eval, preds, split.y_test, output_dir, write_predictions=True)
+    save_all_plots(split.y_test, preds, model_eval, output_dir)
 
 
 def main() -> int:
