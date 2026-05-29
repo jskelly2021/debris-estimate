@@ -45,13 +45,13 @@ def create_output_dir(
     base_dir: str | Path,
     run_name: str | None = None
 ) -> Path:
+    if run_name is None:
+        run_name = "run_" + pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")
+
     output_dir = Path(base_dir) / run_name
 
     if output_dir.exists():
         return output_dir
-
-    if run_name is None:
-        run_name = "run_" + pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -97,8 +97,8 @@ def save_run_outputs(
     preds: PredictionResults,
     y_true: pd.Series,
     output_dir: Path,
-    save_predictions: bool = True
+    write_predictions: bool = True
 ):
     save_metrics_json(eval, output_dir)
-    if save_predictions:
+    if write_predictions:
         save_predictions(y_true, preds, output_dir)

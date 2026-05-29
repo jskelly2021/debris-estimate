@@ -48,7 +48,7 @@ def run_smoke_test(args=None):
 
     output_dir = create_output_dir(OUTPUT_DIR, run_name="smoke_test")
     log.info(f"Saving run outputs to {output_dir}...")
-    save_run_outputs(model_eval, preds, split.y_test, output_dir, save_predictions=True)
+    save_run_outputs(model_eval, preds, split.y_test, output_dir, write_predictions=True)
 
 
 def main() -> int:
