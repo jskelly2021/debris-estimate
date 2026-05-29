@@ -29,6 +29,18 @@ class ClassificationMetrics:
     pr_auc: float
     confusion_matrix: np.ndarray
 
+    @classmethod
+    def nan(cls):
+        return cls(
+            accuracy=np.nan,
+            precision=np.nan,
+            recall=np.nan,
+            f1=np.nan,
+            roc_auc=np.nan,
+            pr_auc=np.nan,
+            confusion_matrix=np.array([]),
+        )
+
 @dataclass
 class RegressionMetrics:
     mae: float
@@ -43,6 +55,23 @@ class RegressionMetrics:
     ape: float
     pcc: float
     msa: float
+
+    @classmethod
+    def nan(cls):
+        return cls(
+            mae=np.nan,
+            mse=np.nan,
+            rmse=np.nan,
+            r2=np.nan,
+            nrmse_range=np.nan,
+            nrmse_mean=np.nan,
+            nrmse_std=np.nan,
+            cov=np.nan,
+            mape=np.nan,
+            ape=np.nan,
+            pcc=np.nan,
+            msa=np.nan,
+        )
 
 
 def _to_numpy(y):

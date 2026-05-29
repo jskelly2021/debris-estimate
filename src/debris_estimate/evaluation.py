@@ -27,14 +27,32 @@ def evaluate_classifier(
     y_pred: pd.Series,
     y_prob: pd.Series
 ) -> ClassificationMetrics:
+    if len(y_true) == 0:
+        return ClassificationMetrics.nan()
+
+    unique_classes = pd.Series(y_true).dropna().unique()
+
+    accuracy = metrics.accuracy_score(y_true, y_pred)
+    precision = metrics.precision_score(y_true, y_pred, zero_division=0)
+    recall = metrics.recall_score(y_true, y_pred, zero_division=0)
+    f1 = metrics.f1_score(y_true, y_pred, zero_division=0)
+    cm = metrics.confusion_matrix(y_true, y_pred)
+
+    if len(unique_classes) < 2:
+        roc_auc = np.nan
+        pr_auc = np.nan
+    else:
+        roc_auc = metrics.roc_auc_score(y_true, y_prob)
+        pr_auc = metrics.average_precision_score(y_true, y_prob)
+
     return ClassificationMetrics(
-        accuracy=metrics.accuracy(y_true, y_pred),
-        precision=metrics.precision(y_true, y_pred),
-        recall=metrics.recall(y_true, y_pred),
-        f1=metrics.f1(y_true, y_pred),
-        roc_auc=metrics.roc_auc(y_true, y_prob),
-        pr_auc=metrics.pr_auc(y_true, y_prob),
-        confusion_matrix=metrics.confusion(y_true, y_pred),
+        accuracy=accuracy,
+        precision=precision,
+        recall=recall,
+        f1=f1,
+        roc_auc=roc_auc,
+        pr_auc=pr_auc,
+        confusion_matrix=cm,
     )
 
 
@@ -42,6 +60,16 @@ def evaluate_regressor(
     y_true: pd.Series,
     y_pred: pd.Series
 ) -> RegressionMetrics:
+    y_true = pd.Series(y_true)
+    y_pred = pd.Series(y_pred)
+
+    valid_mask = y_true.notna() & y_pred.notna()
+    y_true = y_true[valid_mask]
+    y_pred = y_pred[valid_mask]
+
+    if len(y_true) == 0:
+        return RegressionMetrics.nan()
+
     return RegressionMetrics(
         mae=metrics.mae(y_true, y_pred),
         mse=metrics.mse(y_true, y_pred),
