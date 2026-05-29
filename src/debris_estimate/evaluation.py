@@ -91,6 +91,11 @@ def evaluate_system(
     preds: PredictionResults,
     threshold: float
 ):
+    y_tier_true, y_tier_pred, y_tier_prob = preds.tier_pairs(y_true)
+    y_low_true, y_low_pred = preds.low_pairs(y_true)
+    y_high_true, y_high_pred = preds.high_pairs(y_true)
+    y_reg_true, y_reg_pred = preds.reg_pairs(y_true)
+
     system_metrics = evaluate_regressor(y_true, preds.final_pred)
 
     zero_pos_metrics = evaluate_classifier(
@@ -99,31 +104,25 @@ def evaluate_system(
         preds.zero_pos_prob
     )
 
-    positive_mask = preds.zero_pos_pred == 1
-
     tier_metrics = evaluate_classifier(
-        (y_true > threshold).astype(int)[positive_mask],
-        preds.tier_pred[positive_mask],
-        preds.tier_prob[positive_mask]
+        (y_tier_true > threshold).astype(int),
+        y_tier_pred,
+        y_tier_prob
     )
 
-    low_mask = positive_mask & (preds.tier_pred == 0)
-    high_mask = positive_mask & (preds.tier_pred == 1)
-    reg_mask = low_mask | high_mask
-
     low_metrics = evaluate_regressor(
-        y_true[low_mask],
-        preds.low_pred[low_mask]
+        y_low_true,
+        y_low_pred
     )
 
     high_metrics = evaluate_regressor(
-        y_true[high_mask],
-        preds.high_pred[high_mask]
+        y_high_true,
+        y_high_pred
     )
 
     full_metrics = evaluate_regressor(
-        y_true[reg_mask],
-        preds.reg_pred[reg_mask]
+        y_reg_true,
+        y_reg_pred
     )
 
     return EvaluationResults(

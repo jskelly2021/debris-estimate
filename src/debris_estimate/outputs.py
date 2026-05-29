@@ -9,11 +9,39 @@ from dataclasses import asdict, is_dataclass
 from debris_estimate.logger import Log
 from debris_estimate.evaluation import EvaluationResults
 from debris_estimate.model import PredictionResults
+from debris_estimate.plots import (
+    save_confusion_plots,
+    save_classification_curve_plots,
+    save_actual_vs_predicted_plots,
+    save_residual_plots
+)
 
 log = Log()
 
 METRICS_FILENAME = "metrics.json"
 PREDICTIONS_FILENAME = "predictions.csv"
+PLOT_DIR = "plots"
+CONFUSION_MATRIX_PLOT_DIR = "confusion"
+CLASSIFICATION_CURVE_PLOT_DIR = "classification_curves"
+ACTUAL_VS_PREDICTED_PLOT_DIR = "actual_vs_pred"
+RESIDUAL_PLOT_DIR = "residuals"
+
+
+def create_output_dir(
+    output_path: str | Path,
+    run_name: str | None = None
+) -> Path:
+    if run_name is None:
+        run_name = "run_" + pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")
+
+    output_dir = Path(output_path) / run_name
+
+    if output_dir.exists():
+        return output_dir
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    return output_dir
 
 
 def _to_serializable(obj):
@@ -41,40 +69,19 @@ def _to_serializable(obj):
     return obj
 
 
-def create_output_dir(
-    base_dir: str | Path,
-    run_name: str | None = None
-) -> Path:
-    if run_name is None:
-        run_name = "run_" + pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")
-
-    output_dir = Path(base_dir) / run_name
-
-    if output_dir.exists():
-        return output_dir
-
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    return output_dir
-
-
-def save_metrics_json(
+def _save_metrics_json(
     eval: EvaluationResults,
-    output_dir: Path
+    file_path: Path
 ):
-    output_path = output_dir / METRICS_FILENAME
-
-    with output_path.open("w", encoding="utf-8") as f:
+    with file_path.open("w", encoding="utf-8") as f:
         json.dump(_to_serializable(eval), f, indent=4)
 
 
-def save_predictions(
+def _save_predictions(
     y_true: pd.Series,
     preds: PredictionResults,
-    output_dir: Path
+    file_path: Path
 ):
-    output_path = output_dir / PREDICTIONS_FILENAME
-
     pred_df = pd.DataFrame({
         "y_true": y_true,
         "final_pred": preds.final_pred,
@@ -87,18 +94,53 @@ def save_predictions(
         "reg_pred": preds.reg_pred,
     })
 
-    pred_df.to_csv(output_path, index=True, index_label="index")
+    pred_df.to_csv(file_path, index=True, index_label="index")
 
-    return output_path
+
+def _save_plots(
+    y_true: pd.Series,
+    preds: PredictionResults,
+    eval: EvaluationResults,
+    threshold: float,
+    plots_path: Path
+) -> None:
+    confusion_path = plots_path / CONFUSION_MATRIX_PLOT_DIR
+    classification_curve_path = plots_path / CLASSIFICATION_CURVE_PLOT_DIR
+    actual_vs_pred_path = plots_path / ACTUAL_VS_PREDICTED_PLOT_DIR
+    residual_path = plots_path / RESIDUAL_PLOT_DIR
+
+    save_confusion_plots(eval, confusion_path)
+    save_classification_curve_plots(y_true, preds, threshold, classification_curve_path)
+    save_actual_vs_predicted_plots(y_true, preds, actual_vs_pred_path)
+    save_residual_plots(y_true, preds, residual_path)
 
 
 def save_run_outputs(
-    eval: EvaluationResults,
-    preds: PredictionResults,
     y_true: pd.Series,
-    output_dir: Path,
-    write_predictions: bool = True
+    preds: PredictionResults,
+    eval: EvaluationResults,
+    threshold: float,
+    output_path: Path,
+    run_name: str | None = None,
+    save_metrics: bool = True,
+    save_predictions: bool = True,
+    save_plots: bool = True
 ):
-    save_metrics_json(eval, output_dir)
-    if write_predictions:
-        save_predictions(y_true, preds, output_dir)
+    output_dir_path = create_output_dir(output_path, run_name=run_name)
+
+    metrics_file_path = output_dir_path / METRICS_FILENAME
+    predictions_file_path = output_dir_path / PREDICTIONS_FILENAME
+    plots_dir_path = output_dir_path / PLOT_DIR
+
+    if save_metrics:
+        _save_metrics_json(eval, metrics_file_path)
+    if save_predictions:
+        _save_predictions(y_true, preds, predictions_file_path)
+    if save_plots:
+        _save_plots(
+            y_true=y_true,
+            preds=preds,
+            eval=eval,
+            threshold=threshold,
+            plots_path=plots_dir_path
+        )

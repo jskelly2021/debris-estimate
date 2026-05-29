@@ -24,6 +24,13 @@ pip install -e .
 The repository is structured to separate preprocessing, splitting, modeling, evaluation, plotting, and experiment scripts into reusable modules under `src/`.
 
 ```text
+docs/
+  experiments.md       # future experiment ideas and notes
+  roadmap.md           # implementation direction
+notebooks/             # legacy; core logic extracted
+outputs/               # model run outputs; metrics and plots
+scripts/
+  run_smoke_test.py    # one-clip, one-threshold staged model smoke check
 src/
   debris_estimate/
     data.py            # dataset loading
@@ -36,12 +43,6 @@ src/
     preprocessing.py   # feature preprocessing
     resample.py        # data resampling: SMOTE
     split.py           # train/test splits
-scripts/
-  run_smoke_test.py    # one-clip, one-threshold staged model smoke check
-docs/
-  experiments.md       # future experiment ideas and notes
-  roadmap.md           # implementation direction
-notebooks/             # legacy; core logic extracted
 ```
 
 ## Model Training and Prediction Flow
@@ -97,31 +98,30 @@ During prediction, the model routes each row through the stages:
 6. Negative predictions are clipped to `0`.
 
 ### Prediction Results
+`predict_staged_model` returns a `PredictionResults` object containing predictions from each stage of the pipeline.
 
-`predict_staged_model` returns a `PredictionResults` object containing the outputs from each stage of the model. All prediction arrays are the same length as the input `X`.
+Rows that do not reach a stage are represented as `NaN`. For example, rows predicted as zero debris do not receive tier or regressor predictions. 
 
-Rows that do not pass through a later model stage are stored as `NaN`. The only exception is `final_pred`, which always contains a usable end-to-end prediction.
+| Field                            | Description                               |
+| -------------------------------- | ----------------------------------------- |
+| `zero_pos_pred`, `zero_pos_prob` | Zero-vs-positive classifier outputs       |
+| `tier_pred`, `tier_prob`         | Low/high tier classifier outputs          |
+| `low_pred`                       | Low-tier regressor predictions            |
+| `high_pred`                      | High-tier regressor predictions           |
+| `reg_pred`                       | Combined low/high regressor predictions   |
+| `final_pred`                     | Final end-to-end debris volume prediction |
 
-| Field           | Meaning                                                                                                                                |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `zero_pos_pred` | Zero-vs-positive class prediction for every row. `0` means predicted zero debris, `1` means predicted positive debris.                 |
-| `zero_pos_prob` | Probability that each row has positive debris volume.                                                                                  |
-| `tier_pred`     | Low-vs-high tier prediction for rows predicted positive by the zero-vs-positive classifier. `NaN` for predicted-zero rows.             |
-| `tier_prob`     | Probability that a predicted-positive row belongs to the high tier. `NaN` for predicted-zero rows.                                     |
-| `low_pred`      | Low-regressor prediction for rows routed to the low regressor. `NaN` otherwise.                                                        |
-| `high_pred`     | High-regressor prediction for rows routed to the high regressor. `NaN` otherwise.                                                      |
-| `reg_pred`      | Combined low/high regressor prediction for rows routed to either regressor. `NaN` for predicted-zero rows.                             |
-| `final_pred`    | Final debris volume prediction for every row. Predicted-zero rows receive `0`; predicted-positive rows receive their `reg_pred` value. |
+Helper methods are provided to simplify evaluation by automatically aligning predictions with the correct subset of ground-truth values. 
 
-The intended evaluation output for the full staged system is `final_pred`.
+```python
+y_tier_true, y_tier_pred, y_tier_prob = preds.tier_pairs(y_true)
+y_low_true, y_low_pred = preds.low_pairs(y_true)
+y_high_true, y_high_pred = preds.high_pairs(y_true)
+y_reg_true, y_reg_pred = preds.reg_pairs(y_true)
+```
 
-Stage-specific predictions are mainly used for diagnostics:
+`final_pred` should be used to evaluate overall system performance, while the pair helper methods are intended for stage-level evaluation and diagnostics.
 
-* Use `zero_pos_pred` and `zero_pos_prob` to evaluate the zero-vs-positive classifier.
-* Use `tier_pred` and `tier_prob` only on rows where `zero_pos_pred == 1`.
-* Use `low_pred` only on rows routed to the low regressor.
-* Use `high_pred` only on rows routed to the high regressor.
-* Use `reg_pred` only on rows routed to either regressor.
 
 ## Outputs
 
@@ -132,9 +132,11 @@ outputs/
   smoke_test/
     metrics.json
     predictions.csv
+    plots/
 ```
 
 | File              | Description                                                                                                                                                                                                 |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `metrics.json`    | Stores the full `EvaluationResults` object, including system, classifier, and regressor metrics. JSON is used because it supports structured, nested run-level evaluation results.                          |
 | `predictions.csv` | Stores one row per sample containing the ground-truth target, final prediction, and stage-specific predictions from the staged model. CSV is used for sample-level prediction data and downstream analysis. |
+| `plots/`           | Generated visualizations used for model evaluation and diagnostics, including regression and classification performance plots. |
