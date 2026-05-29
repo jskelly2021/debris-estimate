@@ -98,6 +98,10 @@ def save_all_plots(
 ):
     plots_dir = output_dir / PLOT_DIR
 
+    y_low_true, y_low_pred = preds.low_pairs(y_true)
+    y_high_true, y_high_pred = preds.high_pairs(y_true)
+    y_reg_true, y_reg_pred = preds.reg_pairs(y_true)
+
     # Zero vs Positive Confusion Matrix
     save_confusion_matrix(
         confusion_matrix=eval.zero_pos_classifier_metrics.confusion_matrix,
@@ -120,4 +124,28 @@ def save_all_plots(
         y_pred=preds.final_pred,
         output_path=plots_dir / ACTUAL_VS_PREDICTED_PLOT_DIR / "system_actual_vs_pred.png",
         title="System Actual vs Predicted"
+    )
+
+    # Low Tier Actual vs Predicted
+    save_actual_vs_predicted(
+        y_true=y_low_true,
+        y_pred=y_low_pred,
+        output_path=plots_dir / ACTUAL_VS_PREDICTED_PLOT_DIR / "low_actual_vs_pred.png",
+        title="Low Tier Actual vs Predicted"
+    )
+
+    # High Tier Actual vs Predicted
+    save_actual_vs_predicted(
+        y_true=y_high_true,
+        y_pred=y_high_pred,
+        output_path=plots_dir / ACTUAL_VS_PREDICTED_PLOT_DIR / "high_actual_vs_pred.png",
+        title="High Tier Actual vs Predicted"
+    )
+
+    # Full Regression Actual vs Predicted
+    save_actual_vs_predicted(
+        y_true=y_reg_true,
+        y_pred=y_reg_pred,
+        output_path=plots_dir / ACTUAL_VS_PREDICTED_PLOT_DIR / "reg_actual_vs_pred.png",
+        title="Full Regression Actual vs Predicted"
     )

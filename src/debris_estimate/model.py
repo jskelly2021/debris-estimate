@@ -41,6 +41,37 @@ class PredictionResults:
     reg_pred: pd.Series
     final_pred: pd.Series
 
+    def positive_mask(self) -> pd.Series:
+        return self.zero_pos_pred == 1
+    
+    def tier_mask(self) -> pd.Series:
+        return self.tier_pred.notna()
+
+    def low_mask(self) -> pd.Series:
+        return self.low_pred.notna()
+    
+    def high_mask(self) -> pd.Series:
+        return self.high_pred.notna()
+    
+    def reg_mask(self) -> pd.Series:
+        return self.reg_pred.notna()
+    
+    def tier_pairs(self, y_true: pd.Series) -> tuple[pd.Series, pd.Series, pd.Series]:
+        mask = self.tier_mask()
+        return y_true.loc[mask], self.tier_pred.loc[mask], self.tier_prob.loc[mask]
+
+    def low_pairs(self, y_true: pd.Series) -> tuple[pd.Series, pd.Series]:
+        mask = self.low_mask()
+        return y_true.loc[mask], self.low_pred.loc[mask]
+
+    def high_pairs(self, y_true: pd.Series) -> tuple[pd.Series, pd.Series]:
+        mask = self.high_mask()
+        return y_true.loc[mask], self.high_pred.loc[mask]
+
+    def reg_pairs(self, y_true: pd.Series) -> tuple[pd.Series, pd.Series]:
+        mask = self.reg_mask()
+        return y_true.loc[mask], self.reg_pred.loc[mask]
+
 
 def train_zero_pos_classifier(
     X_train: pd.DataFrame,
@@ -146,15 +177,15 @@ def predict_staged_model(
     high_regressor
 ) -> PredictionResults:
     # Initialize prediction series
-    n = X.shape[0]
-    zero_pos_pred = np.full(n, np.nan)
-    zero_pos_prob = np.full(n, np.nan)
-    tier_pred = np.full(n, np.nan)
-    tier_prob = np.full(n, np.nan)
-    low_pred = np.full(n, np.nan)
-    high_pred = np.full(n, np.nan)
-    reg_pred = np.full(n, np.nan)
-    final_pred = np.zeros(n)
+    idx = X.index
+    zero_pos_pred = pd.Series(np.nan, index=idx, name="zero_pos_pred")
+    zero_pos_prob = pd.Series(np.nan, index=idx, name="zero_pos_prob")
+    tier_pred = pd.Series(np.nan, index=idx, name="tier_pred")
+    tier_prob = pd.Series(np.nan, index=idx, name="tier_prob")
+    low_pred = pd.Series(np.nan, index=idx, name="low_pred")
+    high_pred = pd.Series(np.nan, index=idx, name="high_pred")
+    reg_pred = pd.Series(np.nan, index=idx, name="reg_pred")
+    final_pred = pd.Series(0.0, index=idx, name="final_pred")
 
     # Predict zero vs positive
     zero_pos_pred = zero_pos_classifier.predict(X)
