@@ -4,10 +4,8 @@
 
 ### Next up
 
-7. Metric reporting
-8. Model evaluation logic
-9. Basic outputing
-10. Clipping support
+10. Plotting
+11. Clipping support
 
 ### Completed
 
@@ -17,3 +15,6 @@
 4. Train/Test splitting module
 5. Simple smoke test driver
 6. Core model logic
+7. Metric reporting
+8. Model evaluation logic
+9. Standardize output

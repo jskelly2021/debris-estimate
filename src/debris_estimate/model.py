@@ -3,6 +3,7 @@
 import pandas as pd
 import numpy as np
 
+from dataclasses import dataclass
 from xgboost import XGBClassifier, XGBRegressor
 from debris_estimate.logger import Log
 from debris_estimate.resample import apply_smote
@@ -29,7 +30,19 @@ XGB_REG_PARAMS_DEFAULT = dict(
 )
 
 
-def train_zero_vs_positive_classifier(
+@dataclass
+class PredictionResults:
+    zero_pos_pred: pd.Series
+    zero_pos_prob: pd.Series
+    tier_pred: pd.Series
+    tier_prob: pd.Series
+    low_pred: pd.Series
+    high_pred: pd.Series
+    reg_pred: pd.Series
+    final_pred: pd.Series
+
+
+def train_zero_pos_classifier(
     X_train: pd.DataFrame,
     y_train: pd.Series,
     params: dict = XGB_CLF_PARAMS_DEFAULT
@@ -50,14 +63,14 @@ def train_zero_vs_positive_classifier(
 
 
 def train_tier_classifier(
-    X_train: pd.DataFrame,
-    y_train: pd.Series,
+    X_train_pos: pd.DataFrame,
+    y_train_pos: pd.Series,
     threshold: float,
     params: dict = XGB_CLF_PARAMS_DEFAULT
 ):
-    y_tier = (y_train > threshold).astype(int)
+    y_tier = (y_train_pos > threshold).astype(int)
 
-    X_resampled, y_resampled = apply_smote(X_train, y_tier)
+    X_resampled, y_resampled = apply_smote(X_train_pos, y_tier)
 
     log.info("Training tier classfier...")
 
@@ -70,19 +83,19 @@ def train_tier_classifier(
 
 
 def train_low_high_regressors(
-    X_train: pd.DataFrame,
-    y_train: pd.Series,
+    X_train_pos: pd.DataFrame,
+    y_train_pos: pd.Series,
     threshold: float,
     params: dict = XGB_REG_PARAMS_DEFAULT
 ):
-    low_mask = y_train <= threshold
-    high_mask = y_train > threshold
+    low_mask = y_train_pos <= threshold
+    high_mask = y_train_pos > threshold
 
-    X_low = X_train.loc[low_mask]
-    y_low = np.log1p(y_train.loc[low_mask])
+    X_low = X_train_pos.loc[low_mask]
+    y_low = np.log1p(y_train_pos.loc[low_mask])
 
-    X_high = X_train.loc[high_mask]
-    y_high = np.log1p(y_train.loc[high_mask])
+    X_high = X_train_pos.loc[high_mask]
+    y_high = np.log1p(y_train_pos.loc[high_mask])
 
     log.info("Training low regressor...")
     model_low = XGBRegressor(**params)
@@ -104,13 +117,13 @@ def train_staged_model(
     X_train = split.X_train
     y_train = split.y_train
 
-    zero_vs_positive_model = train_zero_vs_positive_classifier(X_train, y_train)
+    zero_pos_classifier = train_zero_pos_classifier(X_train, y_train)
 
     pos_mask = y_train > 0
     X_train_pos = X_train.loc[pos_mask]
     y_train_pos = y_train.loc[pos_mask]
 
-    tier_model = train_tier_classifier(
+    tier_classifier = train_tier_classifier(
         X_train_pos,
         y_train_pos,
         threshold=threshold,
@@ -122,37 +135,66 @@ def train_staged_model(
         threshold=threshold,
     )
 
-    return zero_vs_positive_model, tier_model, low_regressor, high_regressor
+    return zero_pos_classifier, tier_classifier, low_regressor, high_regressor
 
 
 def predict_staged_model(
     X: pd.DataFrame,
-    zero_vs_positive_model,
-    tier_model,
+    zero_pos_classifier,
+    tier_classifier,
     low_regressor,
     high_regressor
-):
-    final_preds = np.zeros(X.shape[0])
+) -> PredictionResults:
+    # Initialize prediction series
+    n = X.shape[0]
+    zero_pos_pred = np.full(n, np.nan)
+    zero_pos_prob = np.full(n, np.nan)
+    tier_pred = np.full(n, np.nan)
+    tier_prob = np.full(n, np.nan)
+    low_pred = np.full(n, np.nan)
+    high_pred = np.full(n, np.nan)
+    reg_pred = np.full(n, np.nan)
+    final_pred = np.zeros(n)
 
-    positive_mask = zero_vs_positive_model.predict(X) == 1
+    # Predict zero vs positive
+    zero_pos_pred = zero_pos_classifier.predict(X)
+    zero_pos_prob = zero_pos_classifier.predict_proba(X)[:, 1]
 
-    if positive_mask.sum() == 0:
-        return final_preds
+    positive_mask = zero_pos_pred == 1
 
-    X_pos = X.loc[positive_mask]
-    tier_preds = tier_model.predict(X_pos)
+    if positive_mask.sum() > 0:
+        # Predict low vs high tier, only for positive-predicted samples
+        tier_pred[positive_mask] = tier_classifier.predict(X.loc[positive_mask])
+        tier_prob[positive_mask] = tier_classifier.predict_proba(X.loc[positive_mask])[:, 1]
 
-    low_mask = tier_preds == 0
-    high_mask = tier_preds == 1
+        low_mask = positive_mask & (tier_pred == 0)  # positive and low tier predicted
+        high_mask = positive_mask & (tier_pred == 1) # positive and high tier predicted
 
-    pos_preds = np.zeros(len(X_pos))
+        # Predict regression values only for positive, low tier samples
+        if low_mask.sum() > 0:
+            low_pred[low_mask] = np.expm1(low_regressor.predict(X.loc[low_mask]))
+            low_pred[low_mask] = np.clip(low_pred[low_mask], 0, None)
 
-    if low_mask.sum() > 0:
-        pos_preds[low_mask] = np.expm1(low_regressor.predict(X_pos.loc[low_mask]))
+        # Predict regression values only for positive, high tier samples
+        if high_mask.sum() > 0:
+            high_pred[high_mask] = np.expm1(high_regressor.predict(X.loc[high_mask]))
+            high_pred[high_mask] = np.clip(high_pred[high_mask], 0, None)
 
-    if high_mask.sum() > 0:
-        pos_preds[high_mask] = np.expm1(high_regressor.predict(X_pos.loc[high_mask]))
+        # Combine low/high predictions
+        reg_pred[low_mask] = low_pred[low_mask]
+        reg_pred[high_mask] = high_pred[high_mask]
 
-    final_preds[positive_mask] = np.clip(pos_preds, 0, None)
+        # Final prediction is zero for zero-predicted samples
+        # and regression prediction for positive-predicted samples
+        final_pred[positive_mask] = reg_pred[positive_mask]
 
-    return final_preds
+    return PredictionResults(
+        zero_pos_pred=zero_pos_pred,
+        zero_pos_prob=zero_pos_prob,
+        tier_pred=tier_pred,
+        tier_prob=tier_prob,
+        low_pred=low_pred,
+        high_pred=high_pred,
+        reg_pred=reg_pred,
+        final_pred=final_pred
+    )

@@ -1,18 +1,19 @@
 """Simple smoke test for staged_model. Performs a single run of the model."""
 
 import argparse
-import pandas as pd
-import numpy as np
 
 from pathlib import Path
+from debris_estimate.evaluation import evaluate_system
 from debris_estimate.logger import setup_logger, Log
 from debris_estimate.data import load_dataset
 from debris_estimate.preprocessing import preprocess_features
 from debris_estimate.split import split_data
 from debris_estimate.model import train_staged_model, predict_staged_model
+from debris_estimate.outputs import create_output_dir, save_run_outputs
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+OUTPUT_DIR = PROJECT_ROOT / "outputs"
 
 setup_logger()
 log = Log()
@@ -31,8 +32,6 @@ def run_smoke_test(args=None):
     X = preprocess_features(df)
     y = df["VolBoth_sum"]
 
-    log.info("Preprocessed data shape: %s", df.shape)
-
     split = split_data(X, y, test_size=0.2, random_state=42)
 
     zero_vs_positive_model, tier_model, low_regressor, high_regressor = train_staged_model(split, threshold=300)
@@ -45,8 +44,11 @@ def run_smoke_test(args=None):
         high_regressor
     )
 
-    preds_summary = pd.Series(preds).describe()
-    log.info("Predictions summary:\n%s", preds_summary)
+    model_eval = evaluate_system(split.y_test, preds, threshold=300)
+
+    output_dir = create_output_dir(OUTPUT_DIR, run_name="smoke_test")
+    log.info(f"Saving run outputs to {output_dir}...")
+    save_run_outputs(model_eval, preds, split.y_test, output_dir, write_predictions=True)
 
 
 def main() -> int:
