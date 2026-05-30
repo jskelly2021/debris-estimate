@@ -7,10 +7,10 @@ from pathlib import Path
 from debris_estimate.evaluation import evaluate_system
 from debris_estimate.logger import setup_logger, Log
 from debris_estimate.data import load_dataset
-from debris_estimate.preprocessing import preprocess_features
+from debris_estimate.preprocessing import preprocess_features, DEFAULT_PREPROCESS_CONFIG
 from debris_estimate.split import split_data
 from debris_estimate.model import train_staged_model, predict_staged_model
-from debris_estimate.clipping import clip_target
+from debris_estimate.clipping import fit_numeric_feature_clip_caps, apply_numeric_feature_clip_caps, clip_target
 from debris_estimate.outputs import save_run_outputs
 
 
@@ -38,15 +38,39 @@ def run_smoke_test(args=None):
 
     split = split_data(X, y, test_size=0.2, random_state=42)
 
-    clip_result = clip_target(y=split.y_train, percentile=1.0)
+    exclude_cols = (
+        DEFAULT_PREPROCESS_CONFIG.log_cols
+        + DEFAULT_PREPROCESS_CONFIG.distance_cols
+        + DEFAULT_PREPROCESS_CONFIG.categorical_cols
+    )
+
+    feature_clip_caps = fit_numeric_feature_clip_caps(
+        X_train=split.X_train,
+        percentile=0.99,
+        exclude_cols=exclude_cols
+    )
+
+    X_train = apply_numeric_feature_clip_caps(
+        X=split.X_train,
+        caps=feature_clip_caps,
+    )
+
+    X_test = apply_numeric_feature_clip_caps(
+        X=split.X_test,
+        caps=feature_clip_caps,
+    )
+
+    target_clip_result = clip_target(y=split.y_train, percentile=1.0)
+    y_train = target_clip_result.y_clipped
 
     zero_vs_positive_model, tier_model, low_regressor, high_regressor = train_staged_model(
-        X_train=split.X_train,
-        y_train=clip_result.y_clipped,
-        threshold=300)
+        X_train=X_train,
+        y_train=y_train,
+        threshold=300
+    )
 
     preds = predict_staged_model(
-        X=split.X_test,
+        X=X_test,
         zero_pos_classifier=zero_vs_positive_model,
         tier_classifier=tier_model,
         low_regressor=low_regressor,

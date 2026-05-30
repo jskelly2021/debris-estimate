@@ -33,7 +33,7 @@ scripts/
   run_smoke_test.py    # one-clip, one-threshold staged model smoke check
 src/
   debris_estimate/
-    clipping.py        # target clipping
+    clipping.py        # feature and target clipping
     data.py            # dataset loading
     evaluation.py      # model evaluation
     logger.py          # process wide logging

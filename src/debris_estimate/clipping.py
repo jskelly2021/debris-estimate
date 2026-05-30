@@ -1,6 +1,7 @@
-"""Target clipping module"""
+"""Feature and target clipping module"""
 
 import pandas as pd
+import numpy as np
 
 from dataclasses import dataclass
 from debris_estimate.logger import Log
@@ -13,6 +14,37 @@ class TargetClipResult:
     upper: float
     n_clipped: int
     percent_clipped: float
+
+
+def fit_numeric_feature_clip_caps(
+    X_train: pd.DataFrame,
+    percentile: float = 0.99,
+    exclude_cols: list[str] | None = None,
+) -> dict[str, float]:
+    if not 0 < percentile <= 1:
+        raise ValueError("feature clip percentile must be between 0 and 1.")
+
+    exclude_cols = exclude_cols or []
+    numeric_cols = X_train.select_dtypes(include=["int64", "float64"]).columns
+
+    return {
+        col: X_train[col].quantile(percentile)
+        for col in numeric_cols
+        if col not in exclude_cols
+    }
+
+
+def apply_numeric_feature_clip_caps(
+    X: pd.DataFrame,
+    caps: dict[str, float],
+) -> pd.DataFrame:
+    X = X.copy()
+
+    for col, upper in caps.items():
+        if col in X.columns:
+            X[col] = np.clip(X[col], 0, upper)
+
+    return X
 
 
 def clip_target(
