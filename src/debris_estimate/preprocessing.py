@@ -17,17 +17,19 @@ class PreprocessConfig:
     distance_cols: list[str] = field(default_factory=list)
 
 
-# Default config based on h9_debrisv5 dataset.
+# Default config based on h9_debrisv6 dataset.
 DEFAULT_PREPROCESS_CONFIG = PreprocessConfig(
     drop_cols = [
-        "VolCD","VolVG","VolCD_sum","VolVG_sum","VolBoth_sum",
-        "Bin_CD","Bin_VG","Bin_Both",
         "GRID_ID",
-        "age_sum","age_med","num_story_sum","num_story_med",
-        "sqm_sum","sqm_med",
-        "found_ht_sum","found_ht_med",
-        "val_struct_sum","val_struct_med",
-        "val_cont_sum","val_cont_med"
+        "age_med",
+        "num_story_sum", "num_story_med",
+        "sqm_sum", "sqm_med",
+        "found_ht_med", "found_ht_sum",
+        "val_struct_sum", "val_struct_med",
+        "val_cont_med", "val_cont_sum",
+        "VolCD", "VolVG",
+        "VolCD_sum", "VolVG_sum", "VolBoth_sum",
+        "Bin_CD", "Bin_VG", "Bin_Both"
     ],
     log_cols  = ["sqm", "val_struct", "val_cont", "fld_pct"],
     categorical_cols = ["evac_degree", "fld_zone", "landcover", "landuse"],

@@ -24,7 +24,7 @@ log = Log()
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run a smoke test for the staged model.")
-    parser.add_argument("--data_path", type=str, default="data/h9_debrisv5.csv", help="Path to the input dataset.")
+    parser.add_argument("--data_path", type=str, default="data/h9_debrisv6.csv", help="Path to the input dataset.")
     return parser.parse_args()
 
 
