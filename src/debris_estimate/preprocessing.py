@@ -50,6 +50,9 @@ def _clip_numeric_columns(
     percentile: float = 0.99,
     exclude_cols: list[str] | None = None
 ) -> pd.DataFrame:
+    if not 0 < percentile <= 1:
+        raise ValueError("feature clip percentile must be between 0 and 1.")
+
     df = df.copy()
 
     exclude_cols = exclude_cols or []

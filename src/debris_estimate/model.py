@@ -122,6 +122,12 @@ def train_low_high_regressors(
     low_mask = y_train_pos <= threshold
     high_mask = y_train_pos > threshold
 
+    if low_mask.sum() == 0:
+        raise ValueError("Cannot train low regressor: no low-tier samples.")
+
+    if high_mask.sum() == 0:
+        raise ValueError("Cannot train high regressor: no high-tier samples.")
+
     X_low = X_train_pos.loc[low_mask]
     y_low = np.log1p(y_train_pos.loc[low_mask])
 
@@ -142,12 +148,10 @@ def train_low_high_regressors(
 
 
 def train_staged_model(
-    split: Split,
+    X_train: pd.Series,
+    y_train: pd.Series,
     threshold: float
 ):
-    X_train = split.X_train
-    y_train = split.y_train
-
     zero_pos_classifier = train_zero_pos_classifier(X_train, y_train)
 
     pos_mask = y_train > 0

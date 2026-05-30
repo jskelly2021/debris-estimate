@@ -10,6 +10,7 @@ from debris_estimate.data import load_dataset
 from debris_estimate.preprocessing import preprocess_features
 from debris_estimate.split import split_data
 from debris_estimate.model import train_staged_model, predict_staged_model
+from debris_estimate.clipping import clip_target
 from debris_estimate.outputs import save_run_outputs
 
 
@@ -37,17 +38,26 @@ def run_smoke_test(args=None):
 
     split = split_data(X, y, test_size=0.2, random_state=42)
 
-    zero_vs_positive_model, tier_model, low_regressor, high_regressor = train_staged_model(split, threshold=300)
+    clip_result = clip_target(y=split.y_train, percentile=1.0)
+
+    zero_vs_positive_model, tier_model, low_regressor, high_regressor = train_staged_model(
+        X_train=split.X_train,
+        y_train=clip_result.y_clipped,
+        threshold=300)
 
     preds = predict_staged_model(
-        split.X_test,
-        zero_vs_positive_model,
-        tier_model,
-        low_regressor,
-        high_regressor
+        X=split.X_test,
+        zero_pos_classifier=zero_vs_positive_model,
+        tier_classifier=tier_model,
+        low_regressor=low_regressor,
+        high_regressor=high_regressor
     )
 
-    model_eval = evaluate_system(split.y_test, preds, threshold=300)
+    model_eval = evaluate_system(
+        y_true=split.y_test,
+        preds=preds,
+        threshold=300
+    )
 
     log.info(f"Saving run outputs to {OUTPUT_PATH}...")
 
