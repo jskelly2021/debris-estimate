@@ -50,6 +50,8 @@ def run_smoke_test(args=None):
         exclude_cols=exclude_cols
     )
 
+    print(feature_clip_caps)
+
     X_train = apply_numeric_feature_clip_caps(
         X=split.X_train,
         caps=feature_clip_caps,

@@ -16,6 +16,11 @@ class TargetClipResult:
     percent_clipped: float
 
 
+def _is_binary_col(s: pd.Series) -> bool:
+    values = s.dropna().unique()
+    return len(values) <= 2 and set(values).issubset({0, 1})
+
+
 def fit_numeric_feature_clip_caps(
     X_train: pd.DataFrame,
     percentile: float = 0.99,
@@ -31,6 +36,7 @@ def fit_numeric_feature_clip_caps(
         col: X_train[col].quantile(percentile)
         for col in numeric_cols
         if col not in exclude_cols
+        and not _is_binary_col(X_train[col])
     }
 
 
