@@ -33,6 +33,7 @@ scripts/
   run_smoke_test.py    # one-clip, one-threshold staged model smoke check
 src/
   debris_estimate/
+    clipping.py        # feature and target clipping
     data.py            # dataset loading
     evaluation.py      # model evaluation
     logger.py          # process wide logging
@@ -129,10 +130,11 @@ Model runs write standardized artifacts under `outputs/`.
 
 ```text
 outputs/
-  smoke_test/
-    metrics.json
-    predictions.csv
-    plots/
+  experiment/
+    run/
+      metrics.json
+      predictions.csv
+      plots/
 ```
 
 | File              | Description                                                                                                                                                                                                 |

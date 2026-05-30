@@ -4,7 +4,6 @@
 
 ### Next up
 
-11. Clipping support
 12. Config support
 
 ### Completed
@@ -19,3 +18,4 @@
 8. Model evaluation logic
 9. Standardize output
 10. Plotting
+11. Clipping support

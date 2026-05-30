@@ -15,9 +15,17 @@ def apply_smote(
     k_neighbors: int = 5
 ):
     counts = y.value_counts()
+
+    if len(counts) < 2:
+        log.warn(
+            "Skipping SMOTE: only one class present: %s",
+            counts.to_dict()
+        )
+        return X, y
+
     min_count = counts.min()
 
-    if len(counts) < 2 or min_count <= k_neighbors:
+    if min_count <= k_neighbors:
         log.warn(
             "Skipping SMOTE: minority class has %s samples, need at least %s.",
             min_count,
