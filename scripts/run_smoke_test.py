@@ -16,7 +16,8 @@ from debris_estimate.config import ExperimentConfig
 from debris_estimate.presets import (
     H9_V6_PREPROCESS_CONFIG,
     BASELINE_SPLIT_CONFIG,
-    BASELINE_CLIP_CONFIG
+    BASELINE_CLIP_CONFIG,
+    BASELINE_MODEL_CONFIG,
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -36,21 +37,20 @@ def parse_args():
 
 def run_smoke_test(args):
     config = ExperimentConfig(
+        name=EXPERIMENT_NAME,
         preprocess=H9_V6_PREPROCESS_CONFIG,
         split=BASELINE_SPLIT_CONFIG,
-        clip=BASELINE_CLIP_CONFIG
+        clip=BASELINE_CLIP_CONFIG,
+        model=BASELINE_MODEL_CONFIG,
     )
 
     data_path = PROJECT_ROOT / args.data_path
-
     df = load_dataset(path=data_path)
 
+    ### Preprocessing and Splitting ###
     X = preprocess_features(
         df=df,
-        drop_cols=config.preprocess.drop_cols,
-        log_cols=config.preprocess.log_cols,
-        categorical_cols=config.preprocess.categorical_cols,
-        distance_cols=config.preprocess.distance_cols,
+        config=config.preprocess,
     )
 
     y = df["VolBoth_sum"]
@@ -62,6 +62,7 @@ def run_smoke_test(args):
         random_state=config.split.random_state
     )
 
+    ### Feature and Target Clipping ###
     exclude_cols = (
         config.preprocess.log_cols
         + config.preprocess.distance_cols
@@ -85,35 +86,35 @@ def run_smoke_test(args):
     y_train_clipped, _, _, _ = clip_target(
         y=y_train,
         percentile=config.clip.target_clip_percentile,
-    ) 
-
-    zero_vs_positive_model, tier_model, low_regressor, high_regressor = train_staged_model(
-        X_train=X_train_clipped,
-        y_train=y_train_clipped,
-        threshold=300
     )
 
+    ### Training ###
+    staged_model = train_staged_model(
+        X_train=X_train_clipped,
+        y_train=y_train_clipped,
+        config=config.model,
+    )
+
+    ### Prediction and Evaluation ###
     preds = predict_staged_model(
         X=X_test_clipped,
-        zero_pos_classifier=zero_vs_positive_model,
-        tier_classifier=tier_model,
-        low_regressor=low_regressor,
-        high_regressor=high_regressor
+        model=staged_model,
     )
 
     model_eval = evaluate_system(
         y_true=y_test,
         preds=preds,
-        threshold=300
+        threshold=config.model.threshold
     )
 
+    ### Outputs ###
     log.info(f"Saving run outputs to {OUTPUT_PATH}...")
 
     save_run_outputs(
         y_true=y_test,
         preds=preds,
         eval=model_eval,
-        threshold=300,
+        threshold=config.model.threshold,
         output_path=OUTPUT_PATH,
         run_name="run",
         save_metrics=True,
