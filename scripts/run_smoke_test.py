@@ -63,40 +63,38 @@ def run_smoke_test(args):
     )
 
     exclude_cols = (
-        H9_V6_PREPROCESS_CONFIG.log_cols
-        + H9_V6_PREPROCESS_CONFIG.distance_cols
-        + H9_V6_PREPROCESS_CONFIG.categorical_cols
+        config.preprocess.log_cols
+        + config.preprocess.distance_cols
+        + config.preprocess.categorical_cols
     )
 
     feature_clip_caps = fit_numeric_feature_clip_caps(
         X_train=X_train,
-        percentile=0.99,
+        percentile=config.clip.feature_clip_percentile,
         exclude_cols=exclude_cols
     )
 
     print(feature_clip_caps)
 
-    X_train = apply_numeric_feature_clip_caps(
-        X=X_train,
+    X_train_clipped, X_test_clipped = apply_numeric_feature_clip_caps(
+        X_train=X_train,
+        X_test=X_test,
         caps=feature_clip_caps,
     )
 
-    X_test = apply_numeric_feature_clip_caps(
-        X=X_test,
-        caps=feature_clip_caps,
-    )
-
-    target_clip_result = clip_target(y=y_train, percentile=1.0)
-    y_train = target_clip_result.y_clipped
+    y_train_clipped, _, _, _ = clip_target(
+        y=y_train,
+        percentile=config.clip.target_clip_percentile,
+    ) 
 
     zero_vs_positive_model, tier_model, low_regressor, high_regressor = train_staged_model(
-        X_train=X_train,
-        y_train=y_train,
+        X_train=X_train_clipped,
+        y_train=y_train_clipped,
         threshold=300
     )
 
     preds = predict_staged_model(
-        X=X_test,
+        X=X_test_clipped,
         zero_pos_classifier=zero_vs_positive_model,
         tier_classifier=tier_model,
         low_regressor=low_regressor,
