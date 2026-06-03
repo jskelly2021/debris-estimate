@@ -55,11 +55,11 @@ def run_smoke_test(args):
 
     y = df["VolBoth_sum"]
 
-    split = split_data(
-        X,
-        y,
-        test_size=0.2,
-        random_state=42
+    X_train, X_test, y_train, y_test = split_data(
+        X=X,
+        y=y,
+        test_size=config.split.test_size,
+        random_state=config.split.random_state
     )
 
     exclude_cols = (
@@ -69,7 +69,7 @@ def run_smoke_test(args):
     )
 
     feature_clip_caps = fit_numeric_feature_clip_caps(
-        X_train=split.X_train,
+        X_train=X_train,
         percentile=0.99,
         exclude_cols=exclude_cols
     )
@@ -77,16 +77,16 @@ def run_smoke_test(args):
     print(feature_clip_caps)
 
     X_train = apply_numeric_feature_clip_caps(
-        X=split.X_train,
+        X=X_train,
         caps=feature_clip_caps,
     )
 
     X_test = apply_numeric_feature_clip_caps(
-        X=split.X_test,
+        X=X_test,
         caps=feature_clip_caps,
     )
 
-    target_clip_result = clip_target(y=split.y_train, percentile=1.0)
+    target_clip_result = clip_target(y=y_train, percentile=1.0)
     y_train = target_clip_result.y_clipped
 
     zero_vs_positive_model, tier_model, low_regressor, high_regressor = train_staged_model(
@@ -104,7 +104,7 @@ def run_smoke_test(args):
     )
 
     model_eval = evaluate_system(
-        y_true=split.y_test,
+        y_true=y_test,
         preds=preds,
         threshold=300
     )
@@ -112,7 +112,7 @@ def run_smoke_test(args):
     log.info(f"Saving run outputs to {OUTPUT_PATH}...")
 
     save_run_outputs(
-        y_true=split.y_test,
+        y_true=y_test,
         preds=preds,
         eval=model_eval,
         threshold=300,
