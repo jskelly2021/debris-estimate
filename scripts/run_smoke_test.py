@@ -12,7 +12,12 @@ from debris_estimate.split import split_data
 from debris_estimate.model import train_staged_model, predict_staged_model
 from debris_estimate.clipping import fit_numeric_feature_clip_caps, apply_numeric_feature_clip_caps, clip_target
 from debris_estimate.outputs import save_run_outputs
-from debris_estimate.presets import H9_V6_PREPROCESS_CONFIG
+from debris_estimate.config import ExperimentConfig
+from debris_estimate.presets import (
+    H9_V6_PREPROCESS_CONFIG,
+    BASELINE_SPLIT_CONFIG,
+    BASELINE_CLIP_CONFIG
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = "outputs"
@@ -30,13 +35,32 @@ def parse_args():
 
 
 def run_smoke_test(args):
+    config = ExperimentConfig(
+        preprocess=H9_V6_PREPROCESS_CONFIG,
+        split=BASELINE_SPLIT_CONFIG,
+        clip=BASELINE_CLIP_CONFIG
+    )
+
     data_path = PROJECT_ROOT / args.data_path
 
-    df = load_dataset(data_path)
-    X = preprocess_features(df)
+    df = load_dataset(path=data_path)
+
+    X = preprocess_features(
+        df=df,
+        drop_cols=config.preprocess.drop_cols,
+        log_cols=config.preprocess.log_cols,
+        categorical_cols=config.preprocess.categorical_cols,
+        distance_cols=config.preprocess.distance_cols,
+    )
+
     y = df["VolBoth_sum"]
 
-    split = split_data(X, y, test_size=0.2, random_state=42)
+    split = split_data(
+        X,
+        y,
+        test_size=0.2,
+        random_state=42
+    )
 
     exclude_cols = (
         H9_V6_PREPROCESS_CONFIG.log_cols

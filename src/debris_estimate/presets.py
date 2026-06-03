@@ -1,6 +1,10 @@
 """Presets for default configurations of the debris estimation pipeline."""
 
-from debris_estimate.config import PreprocessConfig
+from debris_estimate.config import (
+    PreprocessConfig,
+    SplitConfig,
+    ClipConfig,
+)
 
 
 H9_V6_PREPROCESS_CONFIG = PreprocessConfig(
@@ -19,4 +23,16 @@ H9_V6_PREPROCESS_CONFIG = PreprocessConfig(
     log_cols  = ["sqm", "val_struct", "val_cont", "fld_pct"],
     categorical_cols = ["evac_degree", "fld_zone", "landcover", "landuse"],
     distance_cols = ["dist_coast", "dist_reservoir", "dist_htrack_M", "dist_htrack_H"],
+)
+
+
+BASELINE_SPLIT_CONFIG = SplitConfig(
+    test_size=0.2,
+    random_state=42
+)
+
+
+BASELINE_CLIP_CONFIG = ClipConfig(
+    feature_clip_percentile=0.99,
+    target_clip_percentile=0.99
 )
