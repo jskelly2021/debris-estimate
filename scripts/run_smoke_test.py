@@ -7,12 +7,12 @@ from pathlib import Path
 from debris_estimate.evaluation import evaluate_system
 from debris_estimate.logger import setup_logger, Log
 from debris_estimate.data import load_dataset
-from debris_estimate.preprocessing import preprocess_features, DEFAULT_PREPROCESS_CONFIG
+from debris_estimate.preprocessing import preprocess_features
 from debris_estimate.split import split_data
 from debris_estimate.model import train_staged_model, predict_staged_model
 from debris_estimate.clipping import fit_numeric_feature_clip_caps, apply_numeric_feature_clip_caps, clip_target
 from debris_estimate.outputs import save_run_outputs
-
+from debris_estimate.presets import H9_V6_PREPROCESS_CONFIG
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = "outputs"
@@ -29,7 +29,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def run_smoke_test(args=None):
+def run_smoke_test(args):
     data_path = PROJECT_ROOT / args.data_path
 
     df = load_dataset(data_path)
@@ -39,9 +39,9 @@ def run_smoke_test(args=None):
     split = split_data(X, y, test_size=0.2, random_state=42)
 
     exclude_cols = (
-        DEFAULT_PREPROCESS_CONFIG.log_cols
-        + DEFAULT_PREPROCESS_CONFIG.distance_cols
-        + DEFAULT_PREPROCESS_CONFIG.categorical_cols
+        H9_V6_PREPROCESS_CONFIG.log_cols
+        + H9_V6_PREPROCESS_CONFIG.distance_cols
+        + H9_V6_PREPROCESS_CONFIG.categorical_cols
     )
 
     feature_clip_caps = fit_numeric_feature_clip_caps(
