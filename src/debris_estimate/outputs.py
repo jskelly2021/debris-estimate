@@ -15,11 +15,13 @@ from debris_estimate.plots import (
     save_actual_vs_predicted_plots,
     save_residual_plots
 )
+from debris_estimate.config import ExperimentConfig
 
 log = Log()
 
 METRICS_FILENAME = "metrics.json"
 PREDICTIONS_FILENAME = "predictions.csv"
+CONFIG_FILENAME = "config.json"
 PLOT_DIR = "plots"
 CONFUSION_MATRIX_PLOT_DIR = "confusion"
 CLASSIFICATION_CURVE_PLOT_DIR = "classification_curves"
@@ -77,7 +79,7 @@ def _save_metrics_json(
         json.dump(_to_serializable(eval), f, indent=4)
 
 
-def _save_predictions(
+def _save_predictions_csv(
     y_true: pd.Series,
     preds: PredictionResults,
     file_path: Path
@@ -115,32 +117,44 @@ def _save_plots(
     save_residual_plots(y_true, preds, residual_path)
 
 
+def _save_config_json(
+    config: ExperimentConfig,
+    file_path: Path
+) -> None:
+    with file_path.open("w", encoding="utf-8") as f:
+        json.dump(_to_serializable(config), f, indent=4)
+
+
 def save_run_outputs(
     y_true: pd.Series,
     preds: PredictionResults,
     eval: EvaluationResults,
-    threshold: float,
+    config: ExperimentConfig,
     output_path: Path,
     run_name: str | None = None,
     save_metrics: bool = True,
     save_predictions: bool = True,
-    save_plots: bool = True
+    save_plots: bool = True,
+    save_config: bool = True,
 ):
     output_dir_path = create_output_dir(output_path, run_name=run_name)
 
     metrics_file_path = output_dir_path / METRICS_FILENAME
     predictions_file_path = output_dir_path / PREDICTIONS_FILENAME
     plots_dir_path = output_dir_path / PLOT_DIR
+    config_file_path = output_dir_path / CONFIG_FILENAME
 
     if save_metrics:
-        _save_metrics_json(eval, metrics_file_path)
+        _save_metrics_json(eval=eval, file_path=metrics_file_path)
     if save_predictions:
-        _save_predictions(y_true, preds, predictions_file_path)
+        _save_predictions_csv(y_true=y_true, preds=preds, file_path=predictions_file_path)
     if save_plots:
         _save_plots(
             y_true=y_true,
             preds=preds,
             eval=eval,
-            threshold=threshold,
+            threshold=config.model.threshold,
             plots_path=plots_dir_path
         )
+    if save_config:
+        _save_config_json(config=config, file_path=config_file_path)

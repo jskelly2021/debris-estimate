@@ -22,6 +22,7 @@ class SplitConfig:
 class ClipConfig:
     feature_clip_percentile: float | None = None
     target_clip_percentile: float | None = None
+    positive_only_target_clip: bool = True
 
 
 @dataclass
@@ -36,7 +37,7 @@ class ModelConfig:
 @dataclass
 class ExperimentConfig:
     name: str | None = None
-    preprocess: PreprocessConfig
-    split: SplitConfig
-    clip: ClipConfig
-    model: ModelConfig
+    preprocess: PreprocessConfig = field(default_factory=PreprocessConfig)
+    split: SplitConfig = field(default_factory=SplitConfig)
+    clip: ClipConfig = field(default_factory=ClipConfig)
+    model: ModelConfig = field(default_factory=ModelConfig)

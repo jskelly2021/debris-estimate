@@ -10,7 +10,7 @@ from debris_estimate.data import load_dataset
 from debris_estimate.preprocessing import preprocess_features
 from debris_estimate.split import split_data
 from debris_estimate.model import train_staged_model, predict_staged_model
-from debris_estimate.clipping import fit_numeric_feature_clip_caps, apply_numeric_feature_clip_caps, clip_target
+from debris_estimate.clipping import clip_features, clip_targets
 from debris_estimate.outputs import save_run_outputs
 from debris_estimate.config import ExperimentConfig
 from debris_estimate.presets import (
@@ -69,23 +69,16 @@ def run_smoke_test(args):
         + config.preprocess.categorical_cols
     )
 
-    feature_clip_caps = fit_numeric_feature_clip_caps(
-        X_train=X_train,
-        percentile=config.clip.feature_clip_percentile,
-        exclude_cols=exclude_cols
-    )
-
-    print(feature_clip_caps)
-
-    X_train_clipped, X_test_clipped = apply_numeric_feature_clip_caps(
+    X_train_clipped, X_test_clipped = clip_features(
         X_train=X_train,
         X_test=X_test,
-        caps=feature_clip_caps,
+        exclude_cols=exclude_cols,
+        config=config.clip,
     )
 
-    y_train_clipped, _, _, _ = clip_target(
+    y_train_clipped, _, _, _ = clip_targets(
         y=y_train,
-        percentile=config.clip.target_clip_percentile,
+        config=config.clip,
     )
 
     ### Training ###
@@ -114,12 +107,13 @@ def run_smoke_test(args):
         y_true=y_test,
         preds=preds,
         eval=model_eval,
-        threshold=config.model.threshold,
+        config=config,
         output_path=OUTPUT_PATH,
         run_name="run",
         save_metrics=True,
         save_predictions=True,
-        save_plots=True
+        save_plots=True,
+        save_config=True,
     )
 
 
