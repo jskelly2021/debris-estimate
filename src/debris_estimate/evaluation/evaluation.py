@@ -2,11 +2,11 @@
 
 import pandas as pd
 import numpy as np
-import debris_estimate.metrics as metrics
+import debris_estimate.evaluation.metrics as metrics
 
 from dataclasses import dataclass
 from debris_estimate.logger import Log
-from debris_estimate.metrics import ClassificationMetrics, RegressionMetrics
+from debris_estimate.evaluation.metrics import ClassificationMetrics, RegressionMetrics
 from debris_estimate.model import PredictionResults
 
 log = Log()

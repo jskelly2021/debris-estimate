@@ -1,18 +1,16 @@
 """Simple smoke test for staged_model. Performs a single run of the model."""
 
 import argparse
-import pandas as pd
 
 from pathlib import Path
-from debris_estimate.evaluation import evaluate_system
 from debris_estimate.logger import setup_logger, Log
+from debris_estimate.config import RunConfig
 from debris_estimate.data import load_dataset
 from debris_estimate.preprocessing import preprocess_features
 from debris_estimate.split import split_data
-from debris_estimate.model import StagedModel
 from debris_estimate.clipping import clip_features, clip_targets
-from debris_estimate.outputs import save_run_outputs
-from debris_estimate.config import RunConfig
+from debris_estimate.model import StagedModel
+from debris_estimate.evaluation import evaluate_system, save_run_outputs
 from debris_estimate.presets import (
     H9_V6_PREPROCESS_CONFIG,
     BASELINE_SPLIT_CONFIG,

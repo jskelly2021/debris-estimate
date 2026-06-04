@@ -7,15 +7,15 @@ import numpy as np
 from pathlib import Path
 from dataclasses import asdict, is_dataclass
 from debris_estimate.logger import Log
-from debris_estimate.evaluation import EvaluationResults
+from debris_estimate.config import RunConfig
+from debris_estimate.evaluation.evaluation import EvaluationResults
 from debris_estimate.model import PredictionResults
-from debris_estimate.plots import (
+from debris_estimate.evaluation.plots import (
     save_confusion_plots,
     save_classification_curve_plots,
     save_actual_vs_predicted_plots,
     save_residual_plots
 )
-from debris_estimate.config import RunConfig
 
 log = Log()
 
