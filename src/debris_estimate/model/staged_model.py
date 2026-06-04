@@ -58,7 +58,7 @@ class StagedModel:
         self.is_fitted = True
 
 
-    def predict(
+    def predict_details(
         self,
         X: pd.DataFrame
     ) -> PredictionResults:
@@ -118,3 +118,13 @@ class StagedModel:
             reg_pred=reg_pred,
             final_pred=final_pred
         )
+
+
+    def predict(
+        self,
+        X: pd.DataFrame
+    ) -> pd.Serires:
+        if not self.is_fitted:
+            raise ValueError("StagedModel must be fitted before prediction.")
+        pred_details = self.predict_details(X)
+        return pred_details.final_pred

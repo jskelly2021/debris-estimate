@@ -88,7 +88,7 @@ def run_smoke_test(args):
     staged_model.fit(X_train=X_train_clipped, y_train=y_train_clipped)
 
     ### Prediction ###
-    preds = staged_model.predict(X=X_test_clipped)
+    preds = staged_model.predict_details(X=X_test_clipped)
 
     ### Evaluation ###
     model_eval = evaluate_system(
