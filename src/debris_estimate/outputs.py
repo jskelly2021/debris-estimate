@@ -3,19 +3,14 @@
 import json
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 from pathlib import Path
 from dataclasses import asdict, is_dataclass
 from debris_estimate.logger import Log
-from debris_estimate.evaluation import EvaluationResults
-from debris_estimate.model import PredictionResults
-from debris_estimate.plots import (
-    save_confusion_plots,
-    save_classification_curve_plots,
-    save_actual_vs_predicted_plots,
-    save_residual_plots
-)
 from debris_estimate.config import RunConfig
+from debris_estimate.evaluation.results import EvaluationResults
+from debris_estimate.model import PredictionResults
 
 log = Log()
 
@@ -23,13 +18,9 @@ METRICS_FILENAME = "metrics.json"
 PREDICTIONS_FILENAME = "predictions.csv"
 CONFIG_FILENAME = "config.json"
 PLOT_DIR = "plots"
-CONFUSION_MATRIX_PLOT_DIR = "confusion"
-CLASSIFICATION_CURVE_PLOT_DIR = "classification_curves"
-ACTUAL_VS_PREDICTED_PLOT_DIR = "actual_vs_pred"
-RESIDUAL_PLOT_DIR = "residuals"
 
 
-def create_output_dir(
+def _create_output_dir(
     output_path: str | Path,
     run_name: str | None = None
 ) -> Path:
@@ -46,7 +37,7 @@ def create_output_dir(
     return output_dir
 
 
-def _to_serializable(obj):
+def _to_serializable(obj) -> object:
     if is_dataclass(obj):
         return _to_serializable(asdict(obj))
 
@@ -72,88 +63,87 @@ def _to_serializable(obj):
 
 
 def _save_metrics_json(
-    eval: EvaluationResults,
+    eval_results: EvaluationResults,
     file_path: Path
-):
+) -> None:
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+
     with file_path.open("w", encoding="utf-8") as f:
-        json.dump(_to_serializable(eval), f, indent=4)
+        json.dump(_to_serializable(eval_results), f, indent=4)
 
 
 def _save_predictions_csv(
     y_true: pd.Series,
-    preds: PredictionResults,
+    pred_results: PredictionResults,
     file_path: Path
-):
+) -> None:
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    
     pred_df = pd.DataFrame({
         "y_true": y_true,
-        "final_pred": preds.final_pred,
-        "zero_pos_pred": preds.zero_pos_pred,
-        "zero_pos_prob": preds.zero_pos_prob,
-        "tier_pred": preds.tier_pred,
-        "tier_prob": preds.tier_prob,
-        "low_pred": preds.low_pred,
-        "high_pred": preds.high_pred,
-        "reg_pred": preds.reg_pred,
+        "final_pred": pred_results.final_pred,
+        "zero_pos_pred": pred_results.zero_pos_pred,
+        "zero_pos_prob": pred_results.zero_pos_prob,
+        "tier_pred": pred_results.tier_pred,
+        "tier_prob": pred_results.tier_prob,
+        "low_pred": pred_results.low_pred,
+        "high_pred": pred_results.high_pred,
+        "reg_pred": pred_results.reg_pred,
     })
 
     pred_df.to_csv(file_path, index=True, index_label="index")
 
 
 def _save_plots(
-    y_true: pd.Series,
-    preds: PredictionResults,
-    eval: EvaluationResults,
-    threshold: float,
-    plots_path: Path
+    figure_groups: dict[str, dict[str, plt.Figure]],
+    output_dir_path: Path
 ) -> None:
-    confusion_path = plots_path / CONFUSION_MATRIX_PLOT_DIR
-    classification_curve_path = plots_path / CLASSIFICATION_CURVE_PLOT_DIR
-    actual_vs_pred_path = plots_path / ACTUAL_VS_PREDICTED_PLOT_DIR
-    residual_path = plots_path / RESIDUAL_PLOT_DIR
+    output_dir_path.mkdir(parents=True, exist_ok=True)
 
-    save_confusion_plots(eval, confusion_path)
-    save_classification_curve_plots(y_true, preds, threshold, classification_curve_path)
-    save_actual_vs_predicted_plots(y_true, preds, actual_vs_pred_path)
-    save_residual_plots(y_true, preds, residual_path)
+    for group_name, figures in figure_groups.items():
+        group_dir_path = output_dir_path / group_name
+        group_dir_path.mkdir(parents=True, exist_ok=True)
+
+        for name, fig in figures.items():
+            fig_path = group_dir_path / f"{name}.png"
+            fig.savefig(fig_path)
+            plt.close(fig)
 
 
 def _save_config_json(
     config: RunConfig,
     file_path: Path
 ) -> None:
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+
     with file_path.open("w", encoding="utf-8") as f:
         json.dump(_to_serializable(config), f, indent=4)
 
 
 def save_run_outputs(
-    y_true: pd.Series,
-    preds: PredictionResults,
-    eval: EvaluationResults,
-    config: RunConfig,
-    output_path: Path,
-    save_metrics: bool = True,
-    save_predictions: bool = True,
-    save_plots: bool = True,
-    save_config: bool = True,
-):
-    output_dir_path = create_output_dir(output_path, run_name=config.run_name)
+    output_path: Path  | None = None,
+    run_name: str | None = None,
+    eval_results: EvaluationResults  | None = None,
+    y_true: pd.Series | None = None,
+    pred_results: PredictionResults | None = None,
+    run_config: RunConfig  | None = None,
+    figure_groups: dict[str, dict[str, plt.Figure]] | None = None,
+) -> None:
+    output_dir_path = _create_output_dir(output_path, run_name=run_name)
 
     metrics_file_path = output_dir_path / METRICS_FILENAME
     predictions_file_path = output_dir_path / PREDICTIONS_FILENAME
-    plots_dir_path = output_dir_path / PLOT_DIR
     config_file_path = output_dir_path / CONFIG_FILENAME
+    plots_dir_path = output_dir_path / PLOT_DIR
 
-    if save_metrics:
-        _save_metrics_json(eval=eval, file_path=metrics_file_path)
-    if save_predictions:
-        _save_predictions_csv(y_true=y_true, preds=preds, file_path=predictions_file_path)
-    if save_plots:
-        _save_plots(
-            y_true=y_true,
-            preds=preds,
-            eval=eval,
-            threshold=config.model.threshold,
-            plots_path=plots_dir_path
-        )
-    if save_config:
-        _save_config_json(config=config, file_path=config_file_path)
+    if eval_results is not None:
+        _save_metrics_json(eval_results=eval_results, file_path=metrics_file_path)
+
+    if pred_results is not None and y_true is not None:
+        _save_predictions_csv(y_true=y_true, pred_results=pred_results, file_path=predictions_file_path)
+
+    if figure_groups is not None:
+        _save_plots(figure_groups=figure_groups, output_dir_path=plots_dir_path)
+
+    if run_config is not None:
+        _save_config_json(config=run_config, file_path=config_file_path)

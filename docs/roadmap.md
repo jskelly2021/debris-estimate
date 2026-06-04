@@ -4,8 +4,9 @@
 
 ### Next up
 
-13. StagedModel class
-14. Sweep scripts
+14. Distance categorization
+15. Sweep scripts
+16. Hyperparameter tunning scripts
 
 ### Completed
 
@@ -21,3 +22,4 @@
 10. Plotting
 11. Clipping support
 12. Config support
+13. StagedModel class
