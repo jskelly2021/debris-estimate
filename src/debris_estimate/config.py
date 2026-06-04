@@ -8,8 +8,7 @@ class PreprocessConfig:
     drop_cols: list[str] = field(default_factory=list)
     log_cols: list[str] = field(default_factory=list)
     categorical_cols: list[str] = field(default_factory=list)
-    distance_cols: list[str] = field(default_factory=list)
-    binary_distance_threshold: float | None = None
+    distance_col_threshold_map: dict[str, float] = field(default_factory=dict)
 
 
 @dataclass

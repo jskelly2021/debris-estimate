@@ -21,10 +21,24 @@ H9_V6_PREPROCESS_CONFIG = PreprocessConfig(
         "VolCD_sum", "VolVG_sum", "VolBoth_sum",
         "Bin_CD", "Bin_VG", "Bin_Both"
     ],
-    log_cols  = ["sqm", "val_struct", "val_cont", "fld_pct"],
-    categorical_cols = ["evac_degree", "fld_zone", "landcover", "landuse"],
-    distance_cols = ["dist_coast", "dist_reservoir", "dist_htrack_M", "dist_htrack_H"],
-    binary_distance_threshold = None
+    log_cols  = [
+        "sqm",
+        "val_struct",
+        "val_cont",
+        "fld_pct"
+    ],
+    categorical_cols = [
+        "evac_degree",
+        "fld_zone",
+        "landcover",
+        "landuse"
+    ],
+    distance_col_threshold_map = {
+        "dist_coast": 5.0,
+        "dist_reservoir": 3.0,
+        "dist_htrack_M": 170.0,
+        "dist_htrack_H": 60.0,
+    },
 )
 
 
