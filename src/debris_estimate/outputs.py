@@ -15,7 +15,7 @@ from debris_estimate.plots import (
     save_actual_vs_predicted_plots,
     save_residual_plots
 )
-from debris_estimate.config import ExperimentConfig
+from debris_estimate.config import RunConfig
 
 log = Log()
 
@@ -118,7 +118,7 @@ def _save_plots(
 
 
 def _save_config_json(
-    config: ExperimentConfig,
+    config: RunConfig,
     file_path: Path
 ) -> None:
     with file_path.open("w", encoding="utf-8") as f:
@@ -129,15 +129,14 @@ def save_run_outputs(
     y_true: pd.Series,
     preds: PredictionResults,
     eval: EvaluationResults,
-    config: ExperimentConfig,
+    config: RunConfig,
     output_path: Path,
-    run_name: str | None = None,
     save_metrics: bool = True,
     save_predictions: bool = True,
     save_plots: bool = True,
     save_config: bool = True,
 ):
-    output_dir_path = create_output_dir(output_path, run_name=run_name)
+    output_dir_path = create_output_dir(output_path, run_name=config.run_name)
 
     metrics_file_path = output_dir_path / METRICS_FILENAME
     predictions_file_path = output_dir_path / PREDICTIONS_FILENAME

@@ -1,4 +1,4 @@
-""""""
+"""Define configuration dataclasses for the debris estimation pipeline"""
 
 from dataclasses import dataclass, field
 
@@ -35,8 +35,9 @@ class ModelConfig:
 
 
 @dataclass
-class ExperimentConfig:
-    name: str | None = None
+class RunConfig:
+    experiment_name: str | None = None
+    run_name: str | None = "run"
     preprocess: PreprocessConfig = field(default_factory=PreprocessConfig)
     split: SplitConfig = field(default_factory=SplitConfig)
     clip: ClipConfig = field(default_factory=ClipConfig)

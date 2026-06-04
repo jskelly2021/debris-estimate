@@ -12,7 +12,7 @@ from debris_estimate.split import split_data
 from debris_estimate.model import train_staged_model, predict_staged_model
 from debris_estimate.clipping import clip_features, clip_targets
 from debris_estimate.outputs import save_run_outputs
-from debris_estimate.config import ExperimentConfig
+from debris_estimate.config import RunConfig
 from debris_estimate.presets import (
     H9_V6_PREPROCESS_CONFIG,
     BASELINE_SPLIT_CONFIG,
@@ -36,8 +36,9 @@ def parse_args():
 
 
 def run_smoke_test(args):
-    config = ExperimentConfig(
-        name=EXPERIMENT_NAME,
+    config = RunConfig(
+        experiment_name=EXPERIMENT_NAME,
+        run_name="run",
         preprocess=H9_V6_PREPROCESS_CONFIG,
         split=BASELINE_SPLIT_CONFIG,
         clip=BASELINE_CLIP_CONFIG,
@@ -109,7 +110,6 @@ def run_smoke_test(args):
         eval=model_eval,
         config=config,
         output_path=OUTPUT_PATH,
-        run_name="run",
         save_metrics=True,
         save_predictions=True,
         save_plots=True,
