@@ -66,6 +66,9 @@ def _convert_distance_to_binary(
             df[binary_col_name] = (df[col] <= threshold).astype(int)
         else:
             log.warn("Column %s not found for distance to binary conversion.", col)
+
+    df = df.drop(columns=list(distance_col_threshold_map), errors="ignore")
+
     return df
 
 

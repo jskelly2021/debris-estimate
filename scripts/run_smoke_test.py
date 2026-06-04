@@ -6,9 +6,7 @@ from pathlib import Path
 from debris_estimate.logger import setup_logger, Log
 from debris_estimate.config import RunConfig
 from debris_estimate.presets import (
-    H9_V6_PREPROCESS_CONFIG,
-    BASELINE_SPLIT_CONFIG,
-    BASELINE_CLIP_CONFIG,
+    H9_V6_DATA_CONFIG,
     BASELINE_MODEL_CONFIG,
 )
 from debris_estimate.data import (
@@ -41,9 +39,7 @@ def run_smoke_test(args):
     config = RunConfig(
         experiment_name=EXPERIMENT_NAME,
         run_name="run",
-        preprocess=H9_V6_PREPROCESS_CONFIG,
-        split=BASELINE_SPLIT_CONFIG,
-        clip=BASELINE_CLIP_CONFIG,
+        data=H9_V6_DATA_CONFIG,
         model=BASELINE_MODEL_CONFIG,
     )
 
@@ -53,7 +49,7 @@ def run_smoke_test(args):
     ### Preprocessing ###
     X = preprocess_features(
         df=df,
-        config=config.preprocess,
+        config=config.data.preprocess,
     )
 
     ### Splitting ###
@@ -62,27 +58,26 @@ def run_smoke_test(args):
     X_train, X_test, y_train, y_test = split_data(
         X=X,
         y=y,
-        test_size=config.split.test_size,
-        random_state=config.split.random_state
+        config=config.data.split,
     )
 
     ### Clipping ###
     exclude_cols = (
-        config.preprocess.log_cols
-        + config.preprocess.distance_cols
-        + config.preprocess.categorical_cols
+        config.data.preprocess.log_cols
+        + list(config.data.preprocess.distance_col_threshold_map)
+        + config.data.preprocess.categorical_cols
     )
 
     X_train_clipped, X_test_clipped = clip_features(
         X_train=X_train,
         X_test=X_test,
         exclude_cols=exclude_cols,
-        config=config.clip,
+        config=config.data.clip,
     )
 
     y_train_clipped, _, _, _ = clip_targets(
         y=y_train,
-        config=config.clip,
+        config=config.data.clip,
     )
 
     ### Training ###

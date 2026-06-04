@@ -4,6 +4,7 @@ from debris_estimate.config import (
     PreprocessConfig,
     SplitConfig,
     ClipConfig,
+    DataConfig,
     ModelConfig,
 )
 
@@ -51,6 +52,13 @@ BASELINE_SPLIT_CONFIG = SplitConfig(
 BASELINE_CLIP_CONFIG = ClipConfig(
     feature_clip_percentile=0.99,
     target_clip_percentile=0.99
+)
+
+
+H9_V6_DATA_CONFIG = DataConfig(
+    preprocess = H9_V6_PREPROCESS_CONFIG,
+    split = BASELINE_SPLIT_CONFIG,
+    clip = BASELINE_CLIP_CONFIG,
 )
 
 

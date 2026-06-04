@@ -25,6 +25,13 @@ class ClipConfig:
 
 
 @dataclass
+class DataConfig:
+    preprocess: PreprocessConfig = field(default_factory=PreprocessConfig)
+    split: SplitConfig = field(default_factory=SplitConfig)
+    clip: ClipConfig = field(default_factory=ClipConfig)
+
+
+@dataclass
 class ModelConfig:
     zero_pos_params: dict = field(default_factory=dict)
     tier_params: dict = field(default_factory=dict)
@@ -37,7 +44,5 @@ class ModelConfig:
 class RunConfig:
     experiment_name: str | None = None
     run_name: str | None = "run"
-    preprocess: PreprocessConfig = field(default_factory=PreprocessConfig)
-    split: SplitConfig = field(default_factory=SplitConfig)
-    clip: ClipConfig = field(default_factory=ClipConfig)
+    data: DataConfig = field(default_factory=DataConfig)
     model: ModelConfig = field(default_factory=ModelConfig)
