@@ -11,4 +11,4 @@ __pycache__/
 
 # Project specific
 outputs/
-data/
+/data/

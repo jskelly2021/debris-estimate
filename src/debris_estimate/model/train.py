@@ -5,7 +5,7 @@ import numpy as np
 
 from xgboost import XGBClassifier, XGBRegressor
 from debris_estimate.logger import Log
-from debris_estimate.resample import apply_smote
+from debris_estimate.data import apply_smote
 
 log = Log()
 
