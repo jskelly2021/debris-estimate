@@ -12,7 +12,7 @@ def apply_smote(
     X: pd.DataFrame,
     y: pd.Series,
     k_neighbors: int = 5
-):
+) -> tuple[pd.DataFrame, pd.Series]:
     counts = y.value_counts()
 
     if len(counts) < 2:

@@ -34,6 +34,7 @@ scripts/
 src/
   debris_estimate/
     clipping.py        # feature and target clipping
+    config.py          # defines config for modules
     data.py            # dataset loading
     evaluation.py      # model evaluation
     logger.py          # process wide logging
@@ -42,6 +43,7 @@ src/
     outputs.py         # standardized output saving
     plots.py           # plot creation and output
     preprocessing.py   # feature preprocessing
+    presets.py         # defines config presets
     resample.py        # data resampling: SMOTE
     split.py           # train/test splits
 ```
@@ -132,6 +134,7 @@ Model runs write standardized artifacts under `outputs/`.
 outputs/
   experiment/
     run/
+      config.json
       metrics.json
       predictions.csv
       plots/
@@ -139,6 +142,7 @@ outputs/
 
 | File              | Description                                                                                                                                                                                                 |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config.json`    | Stores the full `RunConfig` object, including run, preprocess, split, clip, and model config. JSON is used because it supports structured, nested run-level evaluation results.                          |
 | `metrics.json`    | Stores the full `EvaluationResults` object, including system, classifier, and regressor metrics. JSON is used because it supports structured, nested run-level evaluation results.                          |
 | `predictions.csv` | Stores one row per sample containing the ground-truth target, final prediction, and stage-specific predictions from the staged model. CSV is used for sample-level prediction data and downstream analysis. |
 | `plots/`           | Generated visualizations used for model evaluation and diagnostics, including regression and classification performance plots. |
