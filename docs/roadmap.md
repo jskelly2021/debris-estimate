@@ -4,9 +4,12 @@
 
 ### Next up
 
-14. Distance categorization
-15. Sweep scripts
-16. Hyperparameter tunning scripts
+14. Distance feature categorization
+15. Hazard feature engineering
+16. Ordinal Encoding
+17. SMOGN
+18. Sweep scripts
+19. Hyperparameter tunning scripts
 
 ### Completed
 
