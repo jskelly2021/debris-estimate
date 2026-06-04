@@ -3,9 +3,9 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from sklearn.metrics import ConfusionMatrixDisplay, RocCurveDisplay, PrecisionRecallDisplay
 from pathlib import Path
-from debris_estimate.evaluation import EvaluationResults
+from sklearn.metrics import ConfusionMatrixDisplay, RocCurveDisplay, PrecisionRecallDisplay
+from debris_estimate.evaluation.results import EvaluationResults
 from debris_estimate.model import PredictionResults
 
 
@@ -152,14 +152,14 @@ def save_confusion_plots(
 
 def save_classification_curve_plots(
     y_true: pd.Series,
-    preds: PredictionResults,
+    pred_results: PredictionResults,
     threshold: float,
     classification_curve_path: Path
 ) -> None:
     # Zero vs Positive ROC Curve
     _save_roc_curve(
         y_true=(y_true > 0).astype(int),
-        y_prob=preds.zero_pos_prob,
+        y_prob=pred_results.zero_pos_prob,
         output_path=classification_curve_path / "zero_pos_roc.png",
         title="Zero vs Positive ROC Curve",
     )
@@ -167,12 +167,12 @@ def save_classification_curve_plots(
     # Zero vs Positive Precision-Recall Curve
     _save_pr_curve(
         y_true=(y_true > 0).astype(int),
-        y_prob=preds.zero_pos_prob,
+        y_prob=pred_results.zero_pos_prob,
         output_path=classification_curve_path / "zero_pos_pr.png",
         title="Zero vs Positive Precision-Recall Curve",
     )
 
-    y_tier_true, _, y_tier_prob = preds.tier_pairs(y_true)
+    y_tier_true, _, y_tier_prob = pred_results.tier_pairs(y_true)
 
     if y_tier_true.empty or y_tier_true.nunique() < 2:
         return
@@ -198,17 +198,17 @@ def save_classification_curve_plots(
 
 def save_actual_vs_predicted_plots(
     y_true: pd.Series,
-    preds: PredictionResults,
+    pred_results: PredictionResults,
     actual_vs_pred_path: Path
 ) -> None:
-    y_low_true, y_low_pred = preds.low_pairs(y_true)
-    y_high_true, y_high_pred = preds.high_pairs(y_true)
-    y_reg_true, y_reg_pred = preds.reg_pairs(y_true)
+    y_low_true, y_low_pred = pred_results.low_pairs(y_true)
+    y_high_true, y_high_pred = pred_results.high_pairs(y_true)
+    y_reg_true, y_reg_pred = pred_results.reg_pairs(y_true)
     
     # System Actual vs Predicted
     _save_actual_vs_predicted(
         y_true=y_true,
-        y_pred=preds.final_pred,
+        y_pred=pred_results.final_pred,
         output_path=actual_vs_pred_path / "system_actual_vs_pred.png",
         title="System Actual vs Predicted"
     )
@@ -240,17 +240,17 @@ def save_actual_vs_predicted_plots(
 
 def save_residual_plots(
     y_true: pd.Series,
-    preds: PredictionResults,
+    pred_results: PredictionResults,
     residual_path: Path
 ) -> None:
-    y_low_true, y_low_pred = preds.low_pairs(y_true)
-    y_high_true, y_high_pred = preds.high_pairs(y_true)
-    y_reg_true, y_reg_pred = preds.reg_pairs(y_true)
+    y_low_true, y_low_pred = pred_results.low_pairs(y_true)
+    y_high_true, y_high_pred = pred_results.high_pairs(y_true)
+    y_reg_true, y_reg_pred = pred_results.reg_pairs(y_true)
 
     # System Residual Plot
     _save_residual(
         y_true=y_true,
-        y_pred=preds.final_pred,
+        y_pred=pred_results.final_pred,
         output_path=residual_path / "system_residual.png",
         title="System Residual Plot"
     )
@@ -278,3 +278,12 @@ def save_residual_plots(
         output_path=residual_path / "reg_residual.png",
         title="Full Regression Residual Plot"
     )
+
+
+def create_evaluation_figures(
+    y_true: pd.Series,
+    pred_results: PredictionResults,
+    eval_results: EvaluationResults,
+) -> dict[str, plt.Figure]:
+    # Placeholder for future figure creation logic
+    return {}

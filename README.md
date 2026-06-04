@@ -24,28 +24,16 @@ pip install -e .
 The repository is structured to separate preprocessing, splitting, modeling, evaluation, plotting, and experiment scripts into reusable modules under `src/`.
 
 ```text
-docs/
-  experiments.md       # future experiment ideas and notes
-  roadmap.md           # implementation direction
-notebooks/             # legacy; core logic extracted
-outputs/               # model run outputs; metrics and plots
-scripts/
-  run_smoke_test.py    # one-clip, one-threshold staged model smoke check
-src/
-  debris_estimate/
-    clipping.py        # feature and target clipping
-    config.py          # defines config for modules
-    data.py            # dataset loading
-    evaluation.py      # model evaluation
-    logger.py          # process wide logging
-    metrics.py         # metric formulas
-    model.py           # staged XGBoost model only
-    outputs.py         # standardized output saving
-    plots.py           # plot creation and output
-    preprocessing.py   # feature preprocessing
-    presets.py         # defines config presets
-    resample.py        # data resampling: SMOTE
-    split.py           # train/test splits
+src/debris_estimate/
+  model/               # staged model API, training helpers, prediction routing
+  evaluation/          # metrics, evaluation summaries, diagnostic plots
+  data.py              # dataset loading
+  preprocessing.py
+  split.py
+  clipping.py
+  config.py
+  resample.py
+  presets.py
 ```
 
 ## Model Training and Prediction Flow

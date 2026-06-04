@@ -8,7 +8,7 @@ from pathlib import Path
 from dataclasses import asdict, is_dataclass
 from debris_estimate.logger import Log
 from debris_estimate.config import RunConfig
-from debris_estimate.evaluation.evaluation import EvaluationResults
+from debris_estimate.evaluation.results import EvaluationResults
 from debris_estimate.model import PredictionResults
 from debris_estimate.evaluation.plots import (
     save_confusion_plots,
@@ -126,34 +126,32 @@ def _save_config_json(
 
 
 def save_run_outputs(
-    y_true: pd.Series,
-    preds: PredictionResults,
-    eval: EvaluationResults,
-    config: RunConfig,
-    output_path: Path,
-    save_metrics: bool = True,
-    save_predictions: bool = True,
-    save_plots: bool = True,
-    save_config: bool = True,
+    output_path: Path  | None = None,
+    run_name: str | None = None,
+    eval_results: EvaluationResults  | None = None,
+    y_true: pd.Series | None = None,
+    pred_results: PredictionResults | None = None,
+    figures: dict | None = None,
+    run_config: RunConfig  | None = None,
 ):
-    output_dir_path = create_output_dir(output_path, run_name=config.run_name)
+    output_dir_path = create_output_dir(output_path, run_name=run_name)
 
     metrics_file_path = output_dir_path / METRICS_FILENAME
     predictions_file_path = output_dir_path / PREDICTIONS_FILENAME
     plots_dir_path = output_dir_path / PLOT_DIR
     config_file_path = output_dir_path / CONFIG_FILENAME
 
-    if save_metrics:
-        _save_metrics_json(eval=eval, file_path=metrics_file_path)
-    if save_predictions:
-        _save_predictions_csv(y_true=y_true, preds=preds, file_path=predictions_file_path)
-    if save_plots:
+    if eval_results is not None:
+        _save_metrics_json(eval=eval_results, file_path=metrics_file_path)
+    if pred_results is not None and y_true is not None:
+        _save_predictions_csv(y_true=y_true, preds=pred_results, file_path=predictions_file_path)
+    if figures is not None:
         _save_plots(
             y_true=y_true,
-            preds=preds,
+            preds=pred_results,
             eval=eval,
-            threshold=config.model.threshold,
+            threshold=run_config.model.threshold,
             plots_path=plots_dir_path
         )
-    if save_config:
-        _save_config_json(config=config, file_path=config_file_path)
+    if run_config is not None:
+        _save_config_json(config=run_config, file_path=config_file_path)

@@ -1,8 +1,8 @@
-from .evaluation import evaluate_system, EvaluationResults
-from .outputs import save_run_outputs
+from .evaluation import evaluate_staged_model, EvaluationResults
+from .plots import create_evaluation_figures
 
 __all__ = [
-    "evaluate_system",
+    "evaluate_staged_model",
     "EvaluationResults",
-    "save_run_outputs",
+    "create_evaluation_figures",
 ]

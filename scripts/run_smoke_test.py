@@ -4,19 +4,20 @@ import argparse
 
 from pathlib import Path
 from debris_estimate.logger import setup_logger, Log
-from debris_estimate.config import RunConfig
 from debris_estimate.data import load_dataset
 from debris_estimate.preprocessing import preprocess_features
 from debris_estimate.split import split_data
-from debris_estimate.clipping import clip_features, clip_targets
 from debris_estimate.model import StagedModel
-from debris_estimate.evaluation import evaluate_system, save_run_outputs
+from debris_estimate.clipping import clip_features, clip_targets
+from debris_estimate.config import RunConfig
 from debris_estimate.presets import (
     H9_V6_PREPROCESS_CONFIG,
     BASELINE_SPLIT_CONFIG,
     BASELINE_CLIP_CONFIG,
     BASELINE_MODEL_CONFIG,
 )
+from debris_estimate.evaluation import create_evaluation_figures, evaluate_staged_model
+from debris_estimate.outputs import save_run_outputs
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = "outputs"
@@ -86,28 +87,32 @@ def run_smoke_test(args):
     staged_model.fit(X_train=X_train_clipped, y_train=y_train_clipped)
 
     ### Prediction ###
-    preds = staged_model.predict_details(X=X_test_clipped)
+    pred_results = staged_model.predict_details(X=X_test_clipped)
 
     ### Evaluation ###
-    model_eval = evaluate_system(
+    eval_results = evaluate_staged_model(
         y_true=y_test,
-        preds=preds,
-        threshold=config.model.threshold
+        pred_results=pred_results,
+        threshold=config.model.threshold,
+    )
+
+    figures = create_evaluation_figures(
+        y_true=y_test,
+        pred_results=pred_results,
+        eval_results=eval_results,
     )
 
     ### Output ###
     log.info(f"Saving run outputs to {OUTPUT_PATH}...")
 
     save_run_outputs(
-        y_true=y_test,
-        preds=preds,
-        eval=model_eval,
-        config=config,
         output_path=OUTPUT_PATH,
-        save_metrics=True,
-        save_predictions=True,
-        save_plots=True,
-        save_config=True,
+        run_name=config.run_name,
+        eval_results=eval_results,
+        y_true=y_test,
+        pred_results=pred_results,
+        figures=figures,
+        run_config=config,
     )
 
 

@@ -1,25 +1,17 @@
-"""owns model evaluation logic."""
+"""Evaluate the debris prediction model."""
 
 import pandas as pd
 import numpy as np
 import debris_estimate.evaluation.metrics as metrics
 
-from dataclasses import dataclass
+from pathlib import Path
 from debris_estimate.logger import Log
+from debris_estimate.evaluation.results import EvaluationResults
 from debris_estimate.evaluation.metrics import ClassificationMetrics, RegressionMetrics
 from debris_estimate.model import PredictionResults
+from debris_estimate.config import RunConfig
 
 log = Log()
-
-
-@dataclass
-class EvaluationResults:
-    system_metrics: RegressionMetrics
-    zero_pos_classifier_metrics: ClassificationMetrics
-    tier_classifier_metrics: ClassificationMetrics
-    low_regressor_metrics: RegressionMetrics
-    high_regressor_metrics: RegressionMetrics
-    full_regressor_metrics: RegressionMetrics
 
 
 def evaluate_classifier(
@@ -86,25 +78,25 @@ def evaluate_regressor(
     )
 
 
-def evaluate_system(
+def evaluate_staged_model(
     y_true: pd.Series,
-    preds: PredictionResults,
-    threshold: float
-):
-    y_tier_true, y_tier_pred, y_tier_prob = preds.tier_pairs(y_true)
-    y_low_true, y_low_pred = preds.low_pairs(y_true)
-    y_high_true, y_high_pred = preds.high_pairs(y_true)
-    y_reg_true, y_reg_pred = preds.reg_pairs(y_true)
+    pred_results: PredictionResults,
+    threshold: float,
+) -> EvaluationResults:
+    y_tier_true, y_tier_pred, y_tier_prob = pred_results.tier_pairs(y_true)
+    y_low_true, y_low_pred = pred_results.low_pairs(y_true)
+    y_high_true, y_high_pred = pred_results.high_pairs(y_true)
+    y_reg_true, y_reg_pred = pred_results.reg_pairs(y_true)
 
     system_metrics = evaluate_regressor(
         y_true=y_true,
-        y_pred=preds.final_pred
+        y_pred=pred_results.final_pred
     )
 
     zero_pos_metrics = evaluate_classifier(
         y_true=(y_true > 0).astype(int),
-        y_pred=preds.zero_pos_pred,
-        y_prob=preds.zero_pos_prob
+        y_pred=pred_results.zero_pos_pred,
+        y_prob=pred_results.zero_pos_prob
     )
 
     tier_metrics = evaluate_classifier(
