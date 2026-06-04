@@ -9,7 +9,7 @@ from debris_estimate.logger import setup_logger, Log
 from debris_estimate.data import load_dataset
 from debris_estimate.preprocessing import preprocess_features
 from debris_estimate.split import split_data
-from debris_estimate.model import train_staged_model, predict_staged_model
+from debris_estimate.model import StagedModel
 from debris_estimate.clipping import clip_features, clip_targets
 from debris_estimate.outputs import save_run_outputs
 from debris_estimate.config import RunConfig
@@ -48,12 +48,13 @@ def run_smoke_test(args):
     data_path = PROJECT_ROOT / args.data_path
     df = load_dataset(path=data_path)
 
-    ### Preprocessing and Splitting ###
+    ### Preprocessing ###
     X = preprocess_features(
         df=df,
         config=config.preprocess,
     )
 
+    ### Splitting ###
     y = df["VolBoth_sum"]
 
     X_train, X_test, y_train, y_test = split_data(
@@ -63,7 +64,7 @@ def run_smoke_test(args):
         random_state=config.split.random_state
     )
 
-    ### Feature and Target Clipping ###
+    ### Clipping ###
     exclude_cols = (
         config.preprocess.log_cols
         + config.preprocess.distance_cols
@@ -83,25 +84,20 @@ def run_smoke_test(args):
     )
 
     ### Training ###
-    staged_model = train_staged_model(
-        X_train=X_train_clipped,
-        y_train=y_train_clipped,
-        config=config.model,
-    )
+    staged_model = StagedModel(config=config.model)
+    staged_model.fit(X_train=X_train_clipped, y_train=y_train_clipped)
 
-    ### Prediction and Evaluation ###
-    preds = predict_staged_model(
-        X=X_test_clipped,
-        model=staged_model,
-    )
+    ### Prediction ###
+    preds = staged_model.predict(X=X_test_clipped)
 
+    ### Evaluation ###
     model_eval = evaluate_system(
         y_true=y_test,
         preds=preds,
         threshold=config.model.threshold
     )
 
-    ### Outputs ###
+    ### Output ###
     log.info(f"Saving run outputs to {OUTPUT_PATH}...")
 
     save_run_outputs(
