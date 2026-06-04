@@ -27,8 +27,7 @@ def get_numeric_clip_candidates(
 
     return [
         col for col in numeric_cols
-        if col not in config.distance_cols
-        and col not in config.categorical_cols
+        if col not in config.categorical_cols
     ]
 
 
@@ -47,6 +46,9 @@ def analyze_skew(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
             "p95": s.quantile(0.95),
             "p99": s.quantile(0.99),
             "max": s.max(),
+            "avg": s.mean(),
+            "median": s.median(),
+            "std": s.std(),
             "n_unique": s.nunique(),
         })
 
