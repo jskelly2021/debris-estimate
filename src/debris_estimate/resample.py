@@ -1,7 +1,6 @@
 """owns the logic for resampling the training data to address class imbalance."""
 
 import pandas as pd
-import numpy as np
 
 from imblearn.over_sampling import SMOTE
 from debris_estimate.logger import Log
@@ -13,7 +12,7 @@ def apply_smote(
     X: pd.DataFrame,
     y: pd.Series,
     k_neighbors: int = 5
-):
+) -> tuple[pd.DataFrame, pd.Series]:
     counts = y.value_counts()
 
     if len(counts) < 2:

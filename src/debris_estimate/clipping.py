@@ -3,17 +3,10 @@
 import pandas as pd
 import numpy as np
 
-from dataclasses import dataclass
 from debris_estimate.logger import Log
+from debris_estimate.config import ClipConfig
 
 log = Log()
-
-@dataclass
-class TargetClipResult:
-    y_clipped: pd.Series
-    upper: float
-    n_clipped: int
-    percent_clipped: float
 
 
 def _is_binary_col(s: pd.Series) -> bool:
@@ -21,9 +14,9 @@ def _is_binary_col(s: pd.Series) -> bool:
     return len(values) <= 2 and set(values).issubset({0, 1})
 
 
-def fit_numeric_feature_clip_caps(
+def _fit_numeric_feature_clip_caps(
     X_train: pd.DataFrame,
-    percentile: float = 0.99,
+    percentile: float,
     exclude_cols: list[str] | None = None,
 ) -> dict[str, float]:
     if not 0 < percentile <= 1:
@@ -40,25 +33,48 @@ def fit_numeric_feature_clip_caps(
     }
 
 
-def apply_numeric_feature_clip_caps(
-    X: pd.DataFrame,
+def _apply_numeric_feature_clip_caps(
+    X_train: pd.DataFrame,
+    X_test: pd.DataFrame,
     caps: dict[str, float],
-) -> pd.DataFrame:
-    X = X.copy()
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    X_train = X_train.copy()
+    X_test = X_test.copy()
 
     for col, upper in caps.items():
-        if col in X.columns:
-            X[col] = np.clip(X[col], 0, upper)
+        if col in X_train.columns:
+            X_train[col] = np.clip(X_train[col], 0, upper)
 
-    return X
+        if col in X_test.columns:
+            X_test[col] = np.clip(X_test[col], 0, upper)
+
+    return X_train, X_test
 
 
-def clip_target(
+def clip_features(
+    X_train: pd.DataFrame,
+    X_test: pd.DataFrame,
+    exclude_cols: list[str] | None,
+    config: ClipConfig,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    feature_clip_caps = _fit_numeric_feature_clip_caps(
+        X_train=X_train,
+        percentile=config.feature_clip_percentile,
+        exclude_cols=exclude_cols
+    )
+
+    return _apply_numeric_feature_clip_caps(
+        X_train=X_train,
+        X_test=X_test,
+        caps=feature_clip_caps,
+    )
+
+
+def clip_targets(
     y: pd.Series,
-    percentile: float = 0.99,
-    positive_only: bool = True,
-) -> TargetClipResult:
-    if not 0 < percentile <= 1:
+    config: ClipConfig,
+) -> tuple[pd.Series, float, int, float]:
+    if not 0 < config.target_clip_percentile <= 1:
         raise ValueError("target clip percentile must be between 0 and 1.")
 
     y_clipped = y.copy()
@@ -66,11 +82,11 @@ def clip_target(
     n_clipped = 0
     percent_clipped = 0.0
 
-    quantile_values = y[y > 0] if positive_only else y
+    quantile_values = y[y > 0] if config.positive_only_target_clip else y
 
     if not quantile_values.empty:
-        log.info(f"Clipping training targets at {percentile:.3f}")
-        upper = quantile_values.quantile(percentile)
+        log.info(f"Clipping training targets at {config.target_clip_percentile:.3f}")
+        upper = quantile_values.quantile(config.target_clip_percentile)
 
         clip_mask = y > upper
         n_clipped = int(clip_mask.sum())
@@ -78,9 +94,4 @@ def clip_target(
 
         y_clipped = y_clipped.clip(upper=upper)
 
-    return TargetClipResult(
-        y_clipped=y_clipped,
-        upper=float(upper),
-        n_clipped=n_clipped,
-        percent_clipped=float(percent_clipped),
-    )
+    return y_clipped, upper, n_clipped, percent_clipped

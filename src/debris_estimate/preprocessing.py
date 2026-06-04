@@ -1,52 +1,35 @@
-"""owns the logic for processing features."""
+"""owns the logic for preprocessing features."""
 
 import pandas as pd
 import numpy as np
 
-from dataclasses import dataclass, field
 from debris_estimate.logger import Log
+from debris_estimate.config import PreprocessConfig
 
 log = Log()
 
 
-@dataclass
-class PreprocessConfig:
-    drop_cols: list[str] = field(default_factory=list)
-    log_cols: list[str] = field(default_factory=list)
-    categorical_cols: list[str] = field(default_factory=list)
-    distance_cols: list[str] = field(default_factory=list)
-    feature_clip_percentile: float | None = 1.0
+def _remove_leakage_columns(
+    df: pd.DataFrame,
+    drop_cols: list[str] | None
+) -> pd.DataFrame:
+    if not drop_cols:
+        return df
 
-
-# Default config based on h9_debrisv6 dataset.
-DEFAULT_PREPROCESS_CONFIG = PreprocessConfig(
-    drop_cols = [
-        "GRID_ID",
-        "age_med",
-        "num_story_sum", "num_story_med",
-        "sqm_sum", "sqm_med",
-        "found_ht_med", "found_ht_sum",
-        "val_struct_sum", "val_struct_med",
-        "val_cont_med", "val_cont_sum",
-        "VolCD", "VolVG",
-        "VolCD_sum", "VolVG_sum", "VolBoth_sum",
-        "Bin_CD", "Bin_VG", "Bin_Both"
-    ],
-    log_cols  = ["sqm", "val_struct", "val_cont", "fld_pct"],
-    categorical_cols = ["evac_degree", "fld_zone", "landcover", "landuse"],
-    distance_cols = ["dist_coast", "dist_reservoir", "dist_htrack_M", "dist_htrack_H"],
-)
-
-
-def _remove_leakage_columns(df, columns) -> pd.DataFrame:
     df = df.copy()
-    df = df.drop(columns=columns, errors="ignore")
+    df = df.drop(columns=drop_cols, errors="ignore")
     return df
 
 
-def _log_transform_columns(df, columns) -> pd.DataFrame:
+def _log_transform_columns(
+    df: pd.DataFrame,
+    log_cols: list[str] | None
+) -> pd.DataFrame:
+    if not log_cols:
+        return df
+
     df = df.copy()
-    for col in columns:
+    for col in log_cols:
         if col in df.columns:
             df[col] = np.log1p(df[col])
         else:
@@ -54,26 +37,47 @@ def _log_transform_columns(df, columns) -> pd.DataFrame:
     return df
 
 
-def _one_hot_encode_columns(df, columns, drop_first=True) -> pd.DataFrame:
+def _one_hot_encode_columns(
+    df: pd.DataFrame,
+    categorical_cols: list[str] | None,
+    drop_first=True
+) -> pd.DataFrame:
+    if not categorical_cols:
+        return df
+
     df = df.copy()
-    existing_cols = [col for col in columns if col in df.columns]
+    existing_cols = [col for col in categorical_cols if col in df.columns]
     df = pd.get_dummies(df, columns=existing_cols, drop_first=drop_first)
     return df
 
 
+#TODO: Convert distance features to binary indicators. 
+def _convert_distance_to_binary(
+    df: pd.DataFrame,
+    distance_cols: list[str] | None,
+    binary_distance_threshold: float | None,
+) -> pd.DataFrame:
+    pass
+
+
 def preprocess_features(
     df: pd.DataFrame,
-    config: PreprocessConfig = DEFAULT_PREPROCESS_CONFIG
+    config: PreprocessConfig
 ) -> pd.DataFrame:
     log.info("Starting data preprocessing...")
     df = df.copy()
 
-    df = _remove_leakage_columns(df, config.drop_cols)
-    df = _log_transform_columns(df, config.log_cols)
+    df = _remove_leakage_columns(df=df, drop_cols=config.drop_cols)
+    df = _log_transform_columns(df=df, log_cols=config.log_cols)
 
     #TODO: Convert distance features to binary indicators.
+    # df = _convert_distance_to_binary(
+    #     df=df,
+    #     distance_cols=distance_cols,
+    #     binary_distance_threshold=binary_distance_threshold
+    # )
 
-    df = _one_hot_encode_columns(df, config.categorical_cols)
+    df = _one_hot_encode_columns(df=df, categorical_cols=config.categorical_cols)
 
     log.info("Data preprocessing completed.")
     return df

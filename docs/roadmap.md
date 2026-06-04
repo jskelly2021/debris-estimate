@@ -4,7 +4,8 @@
 
 ### Next up
 
-12. Config support
+13. StagedModel class
+14. Sweep scripts
 
 ### Completed
 
@@ -19,3 +20,4 @@
 9. Standardize output
 10. Plotting
 11. Clipping support
+12. Config support

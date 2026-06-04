@@ -7,12 +7,18 @@ from pathlib import Path
 from debris_estimate.evaluation import evaluate_system
 from debris_estimate.logger import setup_logger, Log
 from debris_estimate.data import load_dataset
-from debris_estimate.preprocessing import preprocess_features, DEFAULT_PREPROCESS_CONFIG
+from debris_estimate.preprocessing import preprocess_features
 from debris_estimate.split import split_data
 from debris_estimate.model import train_staged_model, predict_staged_model
-from debris_estimate.clipping import fit_numeric_feature_clip_caps, apply_numeric_feature_clip_caps, clip_target
+from debris_estimate.clipping import clip_features, clip_targets
 from debris_estimate.outputs import save_run_outputs
-
+from debris_estimate.config import RunConfig
+from debris_estimate.presets import (
+    H9_V6_PREPROCESS_CONFIG,
+    BASELINE_SPLIT_CONFIG,
+    BASELINE_CLIP_CONFIG,
+    BASELINE_MODEL_CONFIG,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = "outputs"
@@ -29,74 +35,85 @@ def parse_args():
     return parser.parse_args()
 
 
-def run_smoke_test(args=None):
-    data_path = PROJECT_ROOT / args.data_path
+def run_smoke_test(args):
+    config = RunConfig(
+        experiment_name=EXPERIMENT_NAME,
+        run_name="run",
+        preprocess=H9_V6_PREPROCESS_CONFIG,
+        split=BASELINE_SPLIT_CONFIG,
+        clip=BASELINE_CLIP_CONFIG,
+        model=BASELINE_MODEL_CONFIG,
+    )
 
-    df = load_dataset(data_path)
-    X = preprocess_features(df)
+    data_path = PROJECT_ROOT / args.data_path
+    df = load_dataset(path=data_path)
+
+    ### Preprocessing and Splitting ###
+    X = preprocess_features(
+        df=df,
+        config=config.preprocess,
+    )
+
     y = df["VolBoth_sum"]
 
-    split = split_data(X, y, test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = split_data(
+        X=X,
+        y=y,
+        test_size=config.split.test_size,
+        random_state=config.split.random_state
+    )
 
+    ### Feature and Target Clipping ###
     exclude_cols = (
-        DEFAULT_PREPROCESS_CONFIG.log_cols
-        + DEFAULT_PREPROCESS_CONFIG.distance_cols
-        + DEFAULT_PREPROCESS_CONFIG.categorical_cols
+        config.preprocess.log_cols
+        + config.preprocess.distance_cols
+        + config.preprocess.categorical_cols
     )
 
-    feature_clip_caps = fit_numeric_feature_clip_caps(
-        X_train=split.X_train,
-        percentile=0.99,
-        exclude_cols=exclude_cols
-    )
-
-    print(feature_clip_caps)
-
-    X_train = apply_numeric_feature_clip_caps(
-        X=split.X_train,
-        caps=feature_clip_caps,
-    )
-
-    X_test = apply_numeric_feature_clip_caps(
-        X=split.X_test,
-        caps=feature_clip_caps,
-    )
-
-    target_clip_result = clip_target(y=split.y_train, percentile=1.0)
-    y_train = target_clip_result.y_clipped
-
-    zero_vs_positive_model, tier_model, low_regressor, high_regressor = train_staged_model(
+    X_train_clipped, X_test_clipped = clip_features(
         X_train=X_train,
-        y_train=y_train,
-        threshold=300
+        X_test=X_test,
+        exclude_cols=exclude_cols,
+        config=config.clip,
     )
 
+    y_train_clipped, _, _, _ = clip_targets(
+        y=y_train,
+        config=config.clip,
+    )
+
+    ### Training ###
+    staged_model = train_staged_model(
+        X_train=X_train_clipped,
+        y_train=y_train_clipped,
+        config=config.model,
+    )
+
+    ### Prediction and Evaluation ###
     preds = predict_staged_model(
-        X=X_test,
-        zero_pos_classifier=zero_vs_positive_model,
-        tier_classifier=tier_model,
-        low_regressor=low_regressor,
-        high_regressor=high_regressor
+        X=X_test_clipped,
+        model=staged_model,
     )
 
     model_eval = evaluate_system(
-        y_true=split.y_test,
+        y_true=y_test,
         preds=preds,
-        threshold=300
+        threshold=config.model.threshold
     )
 
+    ### Outputs ###
     log.info(f"Saving run outputs to {OUTPUT_PATH}...")
 
     save_run_outputs(
-        y_true=split.y_test,
+        y_true=y_test,
         preds=preds,
         eval=model_eval,
-        threshold=300,
+        config=config,
         output_path=OUTPUT_PATH,
-        run_name="run",
         save_metrics=True,
         save_predictions=True,
-        save_plots=True
+        save_plots=True,
+        save_config=True,
     )
 
 
