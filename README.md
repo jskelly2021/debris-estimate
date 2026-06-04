@@ -32,6 +32,7 @@ src/debris_estimate/
   split.py
   clipping.py
   config.py
+  outputs.py
   resample.py
   presets.py
 ```

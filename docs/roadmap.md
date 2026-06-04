@@ -4,7 +4,9 @@
 
 ### Next up
 
-14. Sweep scripts
+14. Distance categorization
+15. Sweep scripts
+16. Hyperparameter tunning scripts
 
 ### Completed
 
