@@ -8,7 +8,10 @@ class PreprocessConfig:
     drop_cols: list[str] = field(default_factory=list)
     log_cols: list[str] = field(default_factory=list)
     categorical_cols: list[str] = field(default_factory=list)
-    distance_col_threshold_map: dict[str, float] = field(default_factory=dict)
+    distance_thresholds: dict[str, float] = field(default_factory=dict)
+    ordinal_maps: dict[str, dict[str, int]] = field(default_factory=dict)
+    hazard_features: dict[str, tuple[str, list[str]]] = field(default_factory=dict)
+    exclude_clip_cols: list[str] = field(default_factory=list)
 
 
 @dataclass

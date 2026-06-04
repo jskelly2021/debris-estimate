@@ -62,16 +62,10 @@ def run_smoke_test(args):
     )
 
     ### Clipping ###
-    exclude_cols = (
-        config.data.preprocess.log_cols
-        + list(config.data.preprocess.distance_col_threshold_map)
-        + config.data.preprocess.categorical_cols
-    )
-
     X_train_clipped, X_test_clipped = clip_features(
         X_train=X_train,
         X_test=X_test,
-        exclude_cols=exclude_cols,
+        exclude_cols=config.data.preprocess.exclude_clip_cols,
         config=config.data.clip,
     )
 

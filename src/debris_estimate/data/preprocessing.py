@@ -37,6 +37,52 @@ def _log_transform_columns(
     return df
 
 
+def _convert_distance_to_binary(
+    df: pd.DataFrame,
+    distance_thresholds: dict[str, float] | None,
+) -> pd.DataFrame:
+    if not distance_thresholds:
+        return df
+
+    df = df.copy()
+    for col, threshold in distance_thresholds.items():
+        if col in df.columns:
+            threshold_str = str(threshold).replace(".", "_")
+            binary_col_name = f"{col}_within_{threshold_str}"
+            df[binary_col_name] = (df[col] <= threshold).astype(int)
+        else:
+            log.warn("Column %s not found for distance to binary conversion.", col)
+
+    df = df.drop(columns=list(distance_thresholds), errors="ignore")
+    return df
+
+
+def _encode_ordinals(
+    df: pd.DataFrame,
+    ordinal_maps: dict[str, dict[str, int]] | None,
+) -> pd.DataFrame:
+    if not ordinal_maps:
+        return df
+
+    df = df.copy()
+    for feature, value_map in ordinal_maps.items():
+        if feature in df.columns:
+            df[f"{feature}_ord"] = df[feature].map(value_map)
+
+            unmapped = df.loc[df[f"{feature}_ord"].isna() & df[feature].notna(), feature].unique()
+            if len(unmapped) > 0:
+                log.warn(
+                    "Unmapped values found for %s during ordinal encoding: %s",
+                    feature,
+                    list(unmapped),
+                )
+        else:
+            log.warn("Column %s not found for ordinal encoding.", feature)
+
+    df = df.drop(columns=list(ordinal_maps), errors="ignore")
+    return df
+
+
 def _one_hot_encode_columns(
     df: pd.DataFrame,
     categorical_cols: list[str] | None,
@@ -51,27 +97,6 @@ def _one_hot_encode_columns(
     return df
 
 
-def _convert_distance_to_binary(
-    df: pd.DataFrame,
-    distance_col_threshold_map: dict[str, float] | None,
-) -> pd.DataFrame:
-    if not distance_col_threshold_map:
-        return df
-
-    df = df.copy()
-    for col, threshold in distance_col_threshold_map.items():
-        if col in df.columns:
-            threshold_str = str(threshold).replace(".", "_")
-            binary_col_name = f"{col}_within_{threshold_str}"
-            df[binary_col_name] = (df[col] <= threshold).astype(int)
-        else:
-            log.warn("Column %s not found for distance to binary conversion.", col)
-
-    df = df.drop(columns=list(distance_col_threshold_map), errors="ignore")
-
-    return df
-
-
 def preprocess_features(
     df: pd.DataFrame,
     config: PreprocessConfig
@@ -81,12 +106,8 @@ def preprocess_features(
 
     df = _remove_leakage_columns(df=df, drop_cols=config.drop_cols)
     df = _log_transform_columns(df=df, log_cols=config.log_cols)
-
-    df = _convert_distance_to_binary(
-        df=df,
-        distance_col_threshold_map=config.distance_col_threshold_map
-    )
-
+    df = _convert_distance_to_binary(df=df, distance_thresholds=config.distance_thresholds)
+    df = _encode_ordinals(df=df, ordinal_maps=config.ordinal_maps)
     df = _one_hot_encode_columns(df=df, categorical_cols=config.categorical_cols)
 
     log.info("Data preprocessing completed.")

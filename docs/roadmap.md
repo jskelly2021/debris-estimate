@@ -4,7 +4,6 @@
 
 ### Next up
 
-14. Distance feature categorization
 15. Hazard feature engineering
 16. Ordinal Encoding
 17. SMOGN
@@ -26,3 +25,4 @@
 11. Clipping support
 12. Config support
 13. StagedModel class
+14. Binary distance features
