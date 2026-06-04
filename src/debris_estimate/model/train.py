@@ -1,3 +1,4 @@
+"""Training functions for internal models."""
 
 import pandas as pd
 import numpy as np
