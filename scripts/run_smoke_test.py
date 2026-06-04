@@ -96,10 +96,11 @@ def run_smoke_test(args):
         threshold=config.model.threshold,
     )
 
-    figures = create_evaluation_figures(
+    figure_groups = create_evaluation_figures(
         y_true=y_test,
         pred_results=pred_results,
         eval_results=eval_results,
+        threshold=config.model.threshold,
     )
 
     ### Output ###
@@ -111,8 +112,8 @@ def run_smoke_test(args):
         eval_results=eval_results,
         y_true=y_test,
         pred_results=pred_results,
-        figures=figures,
         run_config=config,
+        figure_groups=figure_groups,
     )
 
 

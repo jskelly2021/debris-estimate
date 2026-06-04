@@ -8,15 +8,17 @@ from sklearn.metrics import ConfusionMatrixDisplay, RocCurveDisplay, PrecisionRe
 from debris_estimate.evaluation.results import EvaluationResults
 from debris_estimate.model import PredictionResults
 
+CONFUSION_MATRIX = "confusion_matrix"
+CLASSIFICATION_CURVES = "classification_curves"
+ACTUAL_VS_PREDICTED = "actual_vs_predicted"
+RESIDUAL = "residual"
 
-def _save_confusion_matrix(
+
+def _create_confusion_matrix(
     confusion_matrix: pd.DataFrame,
-    output_path: Path,
     labels: list[str] | None = None,
     title: str = "Confusion Matrix"
-) -> None:
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
+) -> plt.Figure:
     fig, ax = plt.subplots(figsize=(6, 5))
 
     display = ConfusionMatrixDisplay(
@@ -28,18 +30,14 @@ def _save_confusion_matrix(
     ax.set_title(title)
 
     fig.tight_layout()
-    fig.savefig(output_path, dpi=300, bbox_inches="tight")
-    plt.close(fig)
+    return fig
 
 
-def _save_roc_curve(
+def _create_roc_curve(
     y_true: pd.Series,
     y_prob: pd.Series,
-    output_path: Path,
     title: str = "ROC Curve",
-) -> None:
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
+) -> plt.Figure:
     fig, ax = plt.subplots(figsize=(6, 5))
 
     RocCurveDisplay.from_predictions(
@@ -51,18 +49,14 @@ def _save_roc_curve(
     ax.set_title(title)
 
     fig.tight_layout()
-    fig.savefig(output_path, dpi=300, bbox_inches="tight")
-    plt.close(fig)
+    return fig
 
 
-def _save_pr_curve(
+def _create_pr_curve(
     y_true: pd.Series,
     y_prob: pd.Series,
-    output_path: Path,
     title: str = "Precision-Recall Curve",
-) -> None:
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
+) -> plt.Figure:
     fig, ax = plt.subplots(figsize=(6, 5))
 
     PrecisionRecallDisplay.from_predictions(
@@ -74,18 +68,14 @@ def _save_pr_curve(
     ax.set_title(title)
 
     fig.tight_layout()
-    fig.savefig(output_path, dpi=300, bbox_inches="tight")
-    plt.close(fig)
+    return fig
 
 
-def _save_actual_vs_predicted(
+def _create_actual_vs_predicted(
     y_true: pd.Series,
     y_pred: pd.Series,
-    output_path: Path,
     title: str = "Actual vs Predicted"
-) -> None:
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
+) -> plt.Figure:
     fig, ax = plt.subplots(figsize=(6, 6))
 
     ax.scatter(y_true, y_pred, alpha=0.6)
@@ -100,18 +90,14 @@ def _save_actual_vs_predicted(
     ax.set_ylabel("Predicted")
 
     fig.tight_layout()
-    fig.savefig(output_path, dpi=300, bbox_inches="tight")
-    plt.close(fig)
+    return fig
 
 
-def _save_residual(
+def _create_residual(
     y_true: pd.Series,
     y_pred: pd.Series,
-    output_path: Path,
     title: str = "Residual Plot",
-) -> None:
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
+) -> plt.Figure:
     residuals = y_true - y_pred
 
     fig, ax = plt.subplots(figsize=(6, 5))
@@ -124,166 +110,171 @@ def _save_residual(
     ax.set_ylabel("Residual (Actual - Predicted)")
 
     fig.tight_layout()
-    fig.savefig(output_path, dpi=300, bbox_inches="tight")
-    plt.close(fig)
+    return fig
 
 
-def save_confusion_plots(
+def _create_confusion_plots(
     eval: EvaluationResults,
-    confusion_path: Path
-) -> None:
+) -> dict[str, plt.Figure]:
+    figs = {}
+
     # Zero vs Positive Confusion Matrix
-    _save_confusion_matrix(
+    figs["zero_pos"] = _create_confusion_matrix(
         confusion_matrix=eval.zero_pos_classifier_metrics.confusion_matrix,
-        output_path=confusion_path / "zero_pos_confusion.png",
         labels=["Zero", "Positive"],
         title="Zero vs Positive Confusion Matrix"
     )
 
     # Tier Confusion Matrix
-    if eval.tier_classifier_metrics.confusion_matrix.size > 0:
-        _save_confusion_matrix(
-            confusion_matrix=eval.tier_classifier_metrics.confusion_matrix,
-            output_path=confusion_path / "tier_confusion.png",
+    cm = eval.tier_classifier_metrics.confusion_matrix
+    if cm is not None and cm.size > 0:
+        figs["tier"] = _create_confusion_matrix(
+            confusion_matrix=cm,
             labels=["Low", "High"],
             title="Tier Confusion Matrix"
         )
 
+    return figs
 
-def save_classification_curve_plots(
+
+def _create_classification_curve_plots(
     y_true: pd.Series,
     pred_results: PredictionResults,
     threshold: float,
-    classification_curve_path: Path
-) -> None:
+) -> dict[str, plt.Figure]:
+    figs = {}
+
     # Zero vs Positive ROC Curve
-    _save_roc_curve(
-        y_true=(y_true > 0).astype(int),
-        y_prob=pred_results.zero_pos_prob,
-        output_path=classification_curve_path / "zero_pos_roc.png",
-        title="Zero vs Positive ROC Curve",
-    )
+    y_true_pos = (y_true > 0).astype(int)
+    if pred_results.zero_pos_prob is not None and y_true_pos.nunique() >= 2:
+        figs["zero_pos_roc"] = _create_roc_curve(
+            y_true=y_true_pos,
+            y_prob=pred_results.zero_pos_prob,
+            title="Zero vs Positive ROC Curve",
+        )
 
-    # Zero vs Positive Precision-Recall Curve
-    _save_pr_curve(
-        y_true=(y_true > 0).astype(int),
-        y_prob=pred_results.zero_pos_prob,
-        output_path=classification_curve_path / "zero_pos_pr.png",
-        title="Zero vs Positive Precision-Recall Curve",
-    )
-
-    y_tier_true, _, y_tier_prob = pred_results.tier_pairs(y_true)
-
-    if y_tier_true.empty or y_tier_true.nunique() < 2:
-        return
-
-    tier_true = (y_tier_true > threshold).astype(int)
+        # Zero vs Positive Precision-Recall Curve
+        figs["zero_pos_pr"] = _create_pr_curve(
+            y_true=y_true_pos,
+            y_prob=pred_results.zero_pos_prob,
+            title="Zero vs Positive Precision-Recall Curve",
+        )
 
     # Tier ROC Curve
-    _save_roc_curve(
-        y_true=tier_true,
-        y_prob=y_tier_prob,
-        output_path=classification_curve_path / "tier_roc.png",
-        title="Tier ROC Curve",
-    )
+    y_tier_true, _, y_tier_prob = pred_results.tier_pairs(y_true)
 
-    # Tier Precision-Recall Curve
-    _save_pr_curve(
-        y_true=tier_true,
-        y_prob=y_tier_prob,
-        output_path=classification_curve_path / "tier_pr.png",
-        title="Tier Precision-Recall Curve",
-    )
+    if y_tier_prob is not None and not y_tier_true.empty and y_tier_true.nunique() >= 2:
+        tier_true = (y_tier_true > threshold).astype(int)
+
+        figs["tier_roc"] = _create_roc_curve(
+            y_true=tier_true,
+            y_prob=y_tier_prob,
+            title="Tier ROC Curve",
+        )
+
+        # Tier Precision-Recall Curve
+        figs["tier_pr"] = _create_pr_curve(
+            y_true=tier_true,
+            y_prob=y_tier_prob,
+            title="Tier Precision-Recall Curve",
+        )
+
+    return figs
 
 
-def save_actual_vs_predicted_plots(
+def _create_actual_vs_predicted_plots(
     y_true: pd.Series,
     pred_results: PredictionResults,
-    actual_vs_pred_path: Path
-) -> None:
+) -> dict[str, plt.Figure]:
+    figs = {}
+
     y_low_true, y_low_pred = pred_results.low_pairs(y_true)
     y_high_true, y_high_pred = pred_results.high_pairs(y_true)
     y_reg_true, y_reg_pred = pred_results.reg_pairs(y_true)
     
     # System Actual vs Predicted
-    _save_actual_vs_predicted(
+    figs["system"] = _create_actual_vs_predicted(
         y_true=y_true,
         y_pred=pred_results.final_pred,
-        output_path=actual_vs_pred_path / "system_actual_vs_pred.png",
         title="System Actual vs Predicted"
     )
 
     # Low Tier Actual vs Predicted
-    _save_actual_vs_predicted(
+    figs["low"] = _create_actual_vs_predicted(
         y_true=y_low_true,
         y_pred=y_low_pred,
-        output_path=actual_vs_pred_path / "low_actual_vs_pred.png",
         title="Low Tier Actual vs Predicted"
     )
 
     # High Tier Actual vs Predicted
-    _save_actual_vs_predicted(
+    figs["high"] = _create_actual_vs_predicted(
         y_true=y_high_true,
         y_pred=y_high_pred,
-        output_path=actual_vs_pred_path / "high_actual_vs_pred.png",
         title="High Tier Actual vs Predicted"
     )
 
     # Full Regression Actual vs Predicted
-    _save_actual_vs_predicted(
+    figs["reg"] = _create_actual_vs_predicted(
         y_true=y_reg_true,
         y_pred=y_reg_pred,
-        output_path=actual_vs_pred_path / "reg_actual_vs_pred.png",
         title="Full Regression Actual vs Predicted"
     )
 
+    return figs
 
-def save_residual_plots(
+
+def _create_residual_plots(
     y_true: pd.Series,
     pred_results: PredictionResults,
-    residual_path: Path
-) -> None:
+) -> dict[str, plt.Figure]:
+    figs = {}
+
     y_low_true, y_low_pred = pred_results.low_pairs(y_true)
     y_high_true, y_high_pred = pred_results.high_pairs(y_true)
     y_reg_true, y_reg_pred = pred_results.reg_pairs(y_true)
 
     # System Residual Plot
-    _save_residual(
+    figs["system"] = _create_residual(
         y_true=y_true,
         y_pred=pred_results.final_pred,
-        output_path=residual_path / "system_residual.png",
         title="System Residual Plot"
     )
 
     # Low Tier Residual Plot
-    _save_residual(
+    figs["low"] = _create_residual(
         y_true=y_low_true,
         y_pred=y_low_pred,
-        output_path=residual_path / "low_residual.png",
         title="Low Tier Residual Plot"
     )
 
     # High Tier Residual Plot
-    _save_residual(
+    figs["high"] = _create_residual(
         y_true=y_high_true,
         y_pred=y_high_pred,
-        output_path=residual_path / "high_residual.png",
         title="High Tier Residual Plot"
     )
 
     # Full Regression Residual Plot
-    _save_residual(
+    figs["reg"] = _create_residual(
         y_true=y_reg_true,
         y_pred=y_reg_pred,
-        output_path=residual_path / "reg_residual.png",
         title="Full Regression Residual Plot"
     )
+
+    return figs
 
 
 def create_evaluation_figures(
     y_true: pd.Series,
     pred_results: PredictionResults,
     eval_results: EvaluationResults,
-) -> dict[str, plt.Figure]:
-    # Placeholder for future figure creation logic
-    return {}
+    threshold: float,
+) -> dict[str, dict[str, plt.Figure]]:
+    figure_groups: dict[str, dict[str, plt.Figure]] = {}
+
+    figure_groups[CONFUSION_MATRIX] = _create_confusion_plots(eval_results)
+    figure_groups[CLASSIFICATION_CURVES] = _create_classification_curve_plots(y_true, pred_results, threshold)
+    figure_groups[ACTUAL_VS_PREDICTED] = _create_actual_vs_predicted_plots(y_true, pred_results)
+    figure_groups[RESIDUAL] = _create_residual_plots(y_true, pred_results)
+
+    return figure_groups
