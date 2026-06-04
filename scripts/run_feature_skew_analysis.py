@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from debris_estimate.logger import Log
 from debris_estimate.data import load_dataset
-from debris_estimate.preprocessing import PreprocessConfig, DEFAULT_PREPROCESS_CONFIG
+from debris_estimate.config import PreprocessConfig
+from debris_estimate.presets import H9_V6_PREPROCESS_CONFIG
 
 log = Log()
 
@@ -81,7 +82,7 @@ def run_feature_skew_analysis(args):
 
     output_path.mkdir(parents=True, exist_ok=True)
 
-    cols = get_numeric_clip_candidates(df, DEFAULT_PREPROCESS_CONFIG)
+    cols = get_numeric_clip_candidates(df, H9_V6_PREPROCESS_CONFIG)
     summary = analyze_skew(df, cols)
     summary.to_csv(output_path / "feature_skew_summary.csv", index=False)
 
