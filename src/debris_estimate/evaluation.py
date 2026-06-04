@@ -96,33 +96,36 @@ def evaluate_system(
     y_high_true, y_high_pred = preds.high_pairs(y_true)
     y_reg_true, y_reg_pred = preds.reg_pairs(y_true)
 
-    system_metrics = evaluate_regressor(y_true, preds.final_pred)
+    system_metrics = evaluate_regressor(
+        y_true=y_true,
+        y_pred=preds.final_pred
+    )
 
     zero_pos_metrics = evaluate_classifier(
-        (y_true > 0).astype(int),
-        preds.zero_pos_pred,
-        preds.zero_pos_prob
+        y_true=(y_true > 0).astype(int),
+        y_pred=preds.zero_pos_pred,
+        y_prob=preds.zero_pos_prob
     )
 
     tier_metrics = evaluate_classifier(
-        (y_tier_true > threshold).astype(int),
-        y_tier_pred,
-        y_tier_prob
+        y_true=(y_tier_true > threshold).astype(int),
+        y_pred=y_tier_pred,
+        y_prob=y_tier_prob
     )
 
     low_metrics = evaluate_regressor(
-        y_low_true,
-        y_low_pred
+        y_true=y_low_true,
+        y_pred=y_low_pred
     )
 
     high_metrics = evaluate_regressor(
-        y_high_true,
-        y_high_pred
+        y_true=y_high_true,
+        y_pred=y_high_pred
     )
 
     full_metrics = evaluate_regressor(
-        y_reg_true,
-        y_reg_pred
+        y_true=y_reg_true,
+        y_pred=y_reg_pred
     )
 
     return EvaluationResults(
