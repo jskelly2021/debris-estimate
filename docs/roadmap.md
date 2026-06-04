@@ -4,8 +4,6 @@
 
 ### Next up
 
-15. Hazard feature engineering
-16. Ordinal Encoding
 17. SMOGN
 18. Sweep scripts
 19. Hyperparameter tunning scripts
@@ -26,3 +24,5 @@
 12. Config support
 13. StagedModel class
 14. Binary distance features
+15. Hazard feature engineering
+16. Ordinal Encoding

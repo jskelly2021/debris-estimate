@@ -21,6 +21,34 @@ def _remove_leakage_columns(
     return df
 
 
+def _make_hazard_features(
+    df: pd.DataFrame,
+    hazard_features: dict[str, tuple[str, list[str]]] | None,
+) -> pd.DataFrame:
+    if not hazard_features:
+        return df
+
+    df = df.copy()
+
+    for hazard_feature, (operation, cols) in hazard_features.items():
+        missing_cols = [col for col in cols if col not in df.columns]
+
+        if missing_cols:
+            log.warn("Missing columns for hazard feature %s: %s", hazard_feature, missing_cols)
+            continue
+
+        if operation == "min":
+            df[hazard_feature] = df[cols].min(axis=1)
+            df = df.drop(columns=cols, errors="ignore")
+        elif operation == "max":
+            df[hazard_feature] = df[cols].max(axis=1)
+            df = df.drop(columns=cols, errors="ignore")
+        else:
+            log.warn("Invalid operation for hazard feature %s: %s", hazard_feature, operation)
+
+    return df
+
+
 def _log_transform_columns(
     df: pd.DataFrame,
     log_cols: list[str] | None
@@ -71,11 +99,7 @@ def _encode_ordinals(
 
             unmapped = df.loc[df[f"{feature}_ord"].isna() & df[feature].notna(), feature].unique()
             if len(unmapped) > 0:
-                log.warn(
-                    "Unmapped values found for %s during ordinal encoding: %s",
-                    feature,
-                    list(unmapped),
-                )
+                log.warn("Unmapped values found for %s during ordinal encoding: %s", feature, list(unmapped))
         else:
             log.warn("Column %s not found for ordinal encoding.", feature)
 
@@ -105,6 +129,7 @@ def preprocess_features(
     df = df.copy()
 
     df = _remove_leakage_columns(df=df, drop_cols=config.drop_cols)
+    df = _make_hazard_features(df=df, hazard_features=config.hazard_features)
     df = _log_transform_columns(df=df, log_cols=config.log_cols)
     df = _convert_distance_to_binary(df=df, distance_thresholds=config.distance_thresholds)
     df = _encode_ordinals(df=df, ordinal_maps=config.ordinal_maps)
