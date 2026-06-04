@@ -79,7 +79,7 @@ class StagedModel:
     def predict(
         self,
         X: pd.DataFrame
-    ) -> pd.Serires:
+    ) -> pd.Series:
         if not self.is_fitted:
             raise ValueError("StagedModel must be fitted before prediction.")
 
