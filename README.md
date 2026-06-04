@@ -27,13 +27,9 @@ The repository is structured to separate preprocessing, splitting, modeling, eva
 src/debris_estimate/
   model/               # staged model API, training helpers, prediction routing
   evaluation/          # metrics, evaluation summaries, diagnostic plots
-  data.py              # dataset loading
-  preprocessing.py
-  split.py
-  clipping.py
+  data/                # dataset processing
   config.py
   outputs.py
-  resample.py
   presets.py
 ```
 
