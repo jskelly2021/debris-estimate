@@ -4,18 +4,19 @@ import argparse
 
 from pathlib import Path
 from debris_estimate.logger import setup_logger, Log
-from debris_estimate.data import load_dataset
-from debris_estimate.preprocessing import preprocess_features
-from debris_estimate.split import split_data
-from debris_estimate.model import StagedModel
-from debris_estimate.clipping import clip_features, clip_targets
 from debris_estimate.config import RunConfig
 from debris_estimate.presets import (
-    H9_V6_PREPROCESS_CONFIG,
-    BASELINE_SPLIT_CONFIG,
-    BASELINE_CLIP_CONFIG,
+    H9_V6_DATA_CONFIG,
     BASELINE_MODEL_CONFIG,
 )
+from debris_estimate.data import (
+    load_dataset,
+    preprocess_features,
+    split_data,
+    clip_features,
+    clip_targets,
+)
+from debris_estimate.model import StagedModel
 from debris_estimate.evaluation import create_evaluation_figures, evaluate_staged_model
 from debris_estimate.outputs import save_run_outputs
 
@@ -38,9 +39,7 @@ def run_smoke_test(args):
     config = RunConfig(
         experiment_name=EXPERIMENT_NAME,
         run_name="run",
-        preprocess=H9_V6_PREPROCESS_CONFIG,
-        split=BASELINE_SPLIT_CONFIG,
-        clip=BASELINE_CLIP_CONFIG,
+        data=H9_V6_DATA_CONFIG,
         model=BASELINE_MODEL_CONFIG,
     )
 
@@ -50,7 +49,7 @@ def run_smoke_test(args):
     ### Preprocessing ###
     X = preprocess_features(
         df=df,
-        config=config.preprocess,
+        config=config.data.preprocess,
     )
 
     ### Splitting ###
@@ -59,27 +58,20 @@ def run_smoke_test(args):
     X_train, X_test, y_train, y_test = split_data(
         X=X,
         y=y,
-        test_size=config.split.test_size,
-        random_state=config.split.random_state
+        config=config.data.split,
     )
 
     ### Clipping ###
-    exclude_cols = (
-        config.preprocess.log_cols
-        + config.preprocess.distance_cols
-        + config.preprocess.categorical_cols
-    )
-
     X_train_clipped, X_test_clipped = clip_features(
         X_train=X_train,
         X_test=X_test,
-        exclude_cols=exclude_cols,
-        config=config.clip,
+        exclude_cols=config.data.preprocess.exclude_clip_cols,
+        config=config.data.clip,
     )
 
     y_train_clipped, _, _, _ = clip_targets(
         y=y_train,
-        config=config.clip,
+        config=config.data.clip,
     )
 
     ### Training ###

@@ -8,8 +8,10 @@ class PreprocessConfig:
     drop_cols: list[str] = field(default_factory=list)
     log_cols: list[str] = field(default_factory=list)
     categorical_cols: list[str] = field(default_factory=list)
-    distance_cols: list[str] = field(default_factory=list)
-    binary_distance_threshold: float | None = None
+    distance_thresholds: dict[str, float] = field(default_factory=dict)
+    ordinal_maps: dict[str, dict[str, int]] = field(default_factory=dict)
+    hazard_features: dict[str, tuple[str, list[str]]] = field(default_factory=dict)
+    exclude_clip_cols: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -26,6 +28,13 @@ class ClipConfig:
 
 
 @dataclass
+class DataConfig:
+    preprocess: PreprocessConfig = field(default_factory=PreprocessConfig)
+    split: SplitConfig = field(default_factory=SplitConfig)
+    clip: ClipConfig = field(default_factory=ClipConfig)
+
+
+@dataclass
 class ModelConfig:
     zero_pos_params: dict = field(default_factory=dict)
     tier_params: dict = field(default_factory=dict)
@@ -38,7 +47,5 @@ class ModelConfig:
 class RunConfig:
     experiment_name: str | None = None
     run_name: str | None = "run"
-    preprocess: PreprocessConfig = field(default_factory=PreprocessConfig)
-    split: SplitConfig = field(default_factory=SplitConfig)
-    clip: ClipConfig = field(default_factory=ClipConfig)
+    data: DataConfig = field(default_factory=DataConfig)
     model: ModelConfig = field(default_factory=ModelConfig)

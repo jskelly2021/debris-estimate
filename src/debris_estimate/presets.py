@@ -4,6 +4,7 @@ from debris_estimate.config import (
     PreprocessConfig,
     SplitConfig,
     ClipConfig,
+    DataConfig,
     ModelConfig,
 )
 
@@ -21,10 +22,24 @@ H9_V6_PREPROCESS_CONFIG = PreprocessConfig(
         "VolCD_sum", "VolVG_sum", "VolBoth_sum",
         "Bin_CD", "Bin_VG", "Bin_Both"
     ],
-    log_cols  = ["sqm", "val_struct", "val_cont", "fld_pct"],
-    categorical_cols = ["evac_degree", "fld_zone", "landcover", "landuse"],
-    distance_cols = ["dist_coast", "dist_reservoir", "dist_htrack_M", "dist_htrack_H"],
-    binary_distance_threshold = None
+    log_cols  = [ "sqm", "val_struct", "val_cont", "fld_pct"],
+    categorical_cols = ["landcover", "landuse", "evac_degree", "fld_zone",],
+    distance_thresholds = {
+        "dist_coast": 5.0,
+        "dist_reservoir": 3.0,
+    },
+    ordinal_maps = {
+        "evac_degree": {"none": 0, "low": 1, "med": 2, "high": 3},
+        "fld_zone": {"OPEN WATER": 0, "X": 0, "A": 1, "AO": 1, "AE": 2, "VE": 3},
+    },
+    hazard_features = {
+        "dist_htrack": ("min", ["dist_htrack_M", "dist_htrack_H"]),
+        "windgust": ("max", ["windgust_M", "windgust_H"]),
+        "rainfall": ("max", ["rainfall_M", "rainfall_H"]),
+    },
+    exclude_clip_cols = [
+        "sqm", "val_struct", "val_cont", "fld_pct", "evac_degree", "fld_zone",
+    ],
 )
 
 
@@ -37,6 +52,13 @@ BASELINE_SPLIT_CONFIG = SplitConfig(
 BASELINE_CLIP_CONFIG = ClipConfig(
     feature_clip_percentile=0.99,
     target_clip_percentile=0.99
+)
+
+
+H9_V6_DATA_CONFIG = DataConfig(
+    preprocess = H9_V6_PREPROCESS_CONFIG,
+    split = BASELINE_SPLIT_CONFIG,
+    clip = BASELINE_CLIP_CONFIG,
 )
 
 

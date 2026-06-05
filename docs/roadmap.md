@@ -4,9 +4,9 @@
 
 ### Next up
 
-14. Distance categorization
-15. Sweep scripts
-16. Hyperparameter tunning scripts
+17. Sweep scripts
+18. Hyperparameter tunning scripts
+19. SMOGN
 
 ### Completed
 
@@ -23,3 +23,6 @@
 11. Clipping support
 12. Config support
 13. StagedModel class
+14. Binary distance features
+15. Hazard feature engineering
+16. Ordinal Encoding
