@@ -22,7 +22,7 @@ def _fit_numeric_feature_clip_caps(
     if not 0 < percentile <= 1:
         raise ValueError("feature clip percentile must be between 0 and 1.")
 
-    exclude_cols = exclude_cols or []
+    exclude_cols = set(exclude_cols or [])
     numeric_cols = X_train.select_dtypes(include=["int64", "float64"]).columns
 
     return {
@@ -30,6 +30,7 @@ def _fit_numeric_feature_clip_caps(
         for col in numeric_cols
         if col not in exclude_cols
         and not _is_binary_col(X_train[col])
+        and not col.endswith("_ord")
     }
 
 
