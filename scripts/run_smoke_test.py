@@ -1,7 +1,5 @@
 """Simple smoke test for staged_model. Performs a single run of the model."""
 
-import argparse
-
 from pathlib import Path
 from debris_estimate.logger import setup_logger, Log
 from debris_estimate.config import RunConfig
@@ -29,13 +27,7 @@ setup_logger()
 log = Log()
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="Run a smoke test for the staged model.")
-    parser.add_argument("--data_path", type=str, default="data/h9_debrisv6.csv", help="Path to the input dataset.")
-    return parser.parse_args()
-
-
-def run_smoke_test(args):
+def run_smoke_test():
     config = RunConfig(
         experiment_name=EXPERIMENT_NAME,
         run_name="run",
@@ -43,7 +35,7 @@ def run_smoke_test(args):
         model=BASELINE_MODEL_CONFIG,
     )
 
-    data_path = PROJECT_ROOT / args.data_path
+    data_path = PROJECT_ROOT / config.data.dataset
     df = load_dataset(path=data_path)
 
     ### Preprocessing ###
@@ -110,10 +102,8 @@ def run_smoke_test(args):
 
 
 def main() -> int:
-    args = parse_args()
-
     try:
-        run_smoke_test(args)
+        run_smoke_test()
         log.info("Smoke test completed successfully.")
         return 0
 

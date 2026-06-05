@@ -56,6 +56,7 @@ BASELINE_CLIP_CONFIG = ClipConfig(
 
 
 H9_V6_DATA_CONFIG = DataConfig(
+    dataset = "data/h9_debrisv6.csv",
     preprocess = H9_V6_PREPROCESS_CONFIG,
     split = BASELINE_SPLIT_CONFIG,
     clip = BASELINE_CLIP_CONFIG,
