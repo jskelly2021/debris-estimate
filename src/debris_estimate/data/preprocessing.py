@@ -58,10 +58,21 @@ def _log_transform_columns(
 
     df = df.copy()
     for col in log_cols:
-        if col in df.columns:
-            df[col] = np.log1p(df[col])
-        else:
+        if col not in df.columns:
             log.warn("Column %s not found for log transformation.", col)
+            continue
+
+        invalid_mask = df[col] < -1
+
+        if invalid_mask.any():
+            invalid_count = int(invalid_mask.sum())
+            raise ValueError(
+                f"Column {col} contains {invalid_count} values less than -1, "
+                "so log1p cannot be safely applied."
+            )
+
+        df[col] = np.log1p(df[col])
+
     return df
 
 
@@ -88,6 +99,7 @@ def _convert_distance_to_binary(
 def _encode_ordinals(
     df: pd.DataFrame,
     ordinal_maps: dict[str, dict[str, int]] | None,
+    unknown_value: int = -1,
 ) -> pd.DataFrame:
     if not ordinal_maps:
         return df
@@ -95,11 +107,17 @@ def _encode_ordinals(
     df = df.copy()
     for feature, value_map in ordinal_maps.items():
         if feature in df.columns:
-            df[f"{feature}_ord"] = df[feature].map(value_map)
+            encoded_col = f"{feature}_ord"
+            df[encoded_col] = df[feature].map(value_map)
 
             unmapped = df.loc[df[f"{feature}_ord"].isna() & df[feature].notna(), feature].unique()
             if len(unmapped) > 0:
-                log.warn("Unmapped values found for %s during ordinal encoding: %s", feature, list(unmapped))
+                log.warn(
+                    "Unmapped values found for %s during ordinal encoding: %s. Filling with %s",
+                     feature, list(unmapped), unknown_value
+                )
+
+                df[encoded_col] = df[encoded_col].fillna(unknown_value)
         else:
             log.warn("Column %s not found for ordinal encoding.", feature)
 
