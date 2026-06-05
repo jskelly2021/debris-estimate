@@ -4,9 +4,9 @@
 
 ### Next up
 
-17. SMOGN
-18. Sweep scripts
-19. Hyperparameter tunning scripts
+17. Sweep scripts
+18. Hyperparameter tunning scripts
+19. SMOGN
 
 ### Completed
 
