@@ -33,6 +33,55 @@ src/debris_estimate/
   presets.py
 ```
 
+## Data Processing Flow
+
+```mermaid
+flowchart TD
+    A[Raw CSV path] --> B[load_dataset]
+    B --> C[Raw DataFrame df]
+
+    C --> D[preprocess_features]
+    D --> E[Remove leakage columns]
+    E --> F[Create hazard features]
+    F --> G[Log-transform selected columns]
+    G --> H[Convert distance columns to binary threshold features]
+    H --> I[Ordinal encode selected columns]
+    I --> J[One-hot encode categorical columns]
+    J --> K[Processed feature matrix X]
+
+    C --> L[Select target y = VolBoth_sum]
+
+    K --> M[split_data]
+    L --> M
+
+    M --> N[X_train]
+    M --> O[X_test]
+    M --> P[y_train]
+    M --> Q[y_test]
+
+    N --> R[Fit feature clipping caps on X_train only]
+    R --> S[Clip X_train]
+    R --> T[Clip X_test using train caps]
+    O --> T
+
+    P --> U[Fit target clip cap on y_train only]
+    U --> V[Clip y_train]
+
+    S --> W[Training features]
+    V --> X[Training target]
+    T --> Y[Test features]
+    Q --> Z[Unclipped test target for evaluation]
+```
+
+1. The dataset is loaded from CSV into a raw DataFrame.
+2. Feature preprocessing is applied to create the model input matrix `X`.
+3. The target column `VolBoth_sum` is selected separately as `y`.
+4. The processed features and raw target are split into train/test sets using shared indices.
+5. Feature clipping caps are fit on `X_train` only, then applied to both `X_train` and `X_test`.
+6. Target clipping is fit and applied only to `y_train`.
+7. The model trains on clipped training features and clipped training targets.
+8. Evaluation compares predictions against the original, unclipped `y_test`.
+
 ## Model Training and Prediction Flow
 
 The staged model is trained as three connected parts:
