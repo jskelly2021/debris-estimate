@@ -54,6 +54,6 @@ class RunConfig:
 @dataclass
 class ExperimentConfig:
     experiment_name: str | None = None
-    primary_metric: str | None = None
-    primary_metric_mode: str | None = "max"
+    primary_metric: str = "system_r2"
+    primary_metric_mode: str = "max"
     swept_fields: list[str] | None = None

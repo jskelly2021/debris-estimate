@@ -33,16 +33,8 @@ log = Log()
 
 
 def run_smoke_test():
-    experiment_config = ExperimentConfig(
-        experiment_name=EXPERIMENT_NAME,
-        primary_metric="system_r2",
-        primary_metric_mode="max",
-        swept_fields=None,
-    )
-    save_experiment_config(output_path=OUTPUT_PATH, experiment_config=experiment_config)
-
     config = RunConfig(
-        run_name="run",
+        run_name="run01",
         data=H9_V6_DATA_CONFIG,
         model=BASELINE_MODEL_CONFIG,
     )
@@ -110,10 +102,19 @@ def run_smoke_test():
         figure_groups=figure_groups,
     )
 
+    experiment_config = ExperimentConfig(
+            experiment_name=EXPERIMENT_NAME,
+            primary_metric="system_r2",
+            primary_metric_mode="max",
+            swept_fields=None,
+        )
+
+    save_experiment_config(output_path=OUTPUT_PATH, experiment_config=experiment_config)
+
     analyze_sweep(
         runs_path=RUNS_OUTPUT_PATH,
         analysis_path=ANALYSIS_OUTPUT_PATH,
-        primary_metric="system_r2"
+        experiment_config=experiment_config,
     )
 
 

@@ -5,9 +5,9 @@ from debris_estimate.evaluation.metrics import ClassificationMetrics, Regression
 
 @dataclass
 class EvaluationResults:
-    system_metrics: RegressionMetrics
-    zero_pos_classifier_metrics: ClassificationMetrics
-    tier_classifier_metrics: ClassificationMetrics
-    low_regressor_metrics: RegressionMetrics
-    high_regressor_metrics: RegressionMetrics
-    full_regressor_metrics: RegressionMetrics
+    system: RegressionMetrics
+    zero_pos: ClassificationMetrics
+    tier: ClassificationMetrics
+    low: RegressionMetrics
+    high: RegressionMetrics
+    full: RegressionMetrics

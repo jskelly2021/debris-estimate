@@ -120,13 +120,13 @@ def _create_confusion_plots(
 
     # Zero vs Positive Confusion Matrix
     figs["zero_pos"] = _create_confusion_matrix(
-        confusion_matrix=eval.zero_pos_classifier_metrics.confusion_matrix,
+        confusion_matrix=eval.zero_pos.confusion_matrix,
         labels=["Zero", "Positive"],
         title="Zero vs Positive Confusion Matrix"
     )
 
     # Tier Confusion Matrix
-    cm = eval.tier_classifier_metrics.confusion_matrix
+    cm = eval.tier.confusion_matrix
     if cm is not None and cm.size > 0:
         figs["tier"] = _create_confusion_matrix(
             confusion_matrix=cm,
