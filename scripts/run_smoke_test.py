@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from debris_estimate.logger import setup_logger, Log
-from debris_estimate.config import RunConfig
+from debris_estimate.config import RunConfig, ExperimentConfig
 from debris_estimate.presets import (
     H9_V6_DATA_CONFIG,
     BASELINE_MODEL_CONFIG,
@@ -16,8 +16,8 @@ from debris_estimate.data import (
 )
 from debris_estimate.model import StagedModel
 from debris_estimate.evaluation import create_evaluation_figures, evaluate_staged_model
-from debris_estimate.outputs import save_run_outputs
-from debris_estimate.sweep.summary import build_summary_df, write_summary
+from debris_estimate.outputs import save_run_outputs, save_experiment_config
+from debris_estimate.sweep import analyze_sweep
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = "outputs"
@@ -28,14 +28,20 @@ OUTPUT_PATH = PROJECT_ROOT / OUTPUT_DIR / EXPERIMENT_NAME
 RUNS_OUTPUT_PATH = OUTPUT_PATH / RUN_OUTPUT_DIR
 ANALYSIS_OUTPUT_PATH = OUTPUT_PATH / ANALYSIS_OUTPUT_DIR
 
-
 setup_logger()
 log = Log()
 
 
 def run_smoke_test():
-    config = RunConfig(
+    experiment_config = ExperimentConfig(
         experiment_name=EXPERIMENT_NAME,
+        primary_metric="system_r2",
+        primary_metric_mode="max",
+        swept_fields=None,
+    )
+    save_experiment_config(output_path=OUTPUT_PATH, experiment_config=experiment_config)
+
+    config = RunConfig(
         run_name="run",
         data=H9_V6_DATA_CONFIG,
         model=BASELINE_MODEL_CONFIG,
@@ -94,8 +100,6 @@ def run_smoke_test():
     )
 
     ### Output ###
-    log.info(f"Saving run outputs to {RUNS_OUTPUT_PATH}...")
-
     save_run_outputs(
         output_path=RUNS_OUTPUT_PATH,
         run_name=config.run_name,
@@ -106,10 +110,10 @@ def run_smoke_test():
         figure_groups=figure_groups,
     )
 
-    summary = build_summary_df(runs_path=RUNS_OUTPUT_PATH)
-    write_summary(
-        summary_df=summary,
+    analyze_sweep(
+        runs_path=RUNS_OUTPUT_PATH,
         analysis_path=ANALYSIS_OUTPUT_PATH,
+        primary_metric="system_r2"
     )
 
 

@@ -8,12 +8,13 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from dataclasses import asdict, is_dataclass
 from debris_estimate.logger import Log
-from debris_estimate.config import RunConfig
+from debris_estimate.config import RunConfig, ExperimentConfig
 from debris_estimate.evaluation.results import EvaluationResults
 from debris_estimate.model import PredictionResults
 
 log = Log()
 
+EXPERIMENT_CONFIG_FILENAME = "experiment.json"
 METRICS_FILENAME = "metrics.json"
 PREDICTIONS_FILENAME = "predictions.csv"
 CONFIG_FILENAME = "config.json"
@@ -147,3 +148,14 @@ def save_run_outputs(
 
     if run_config is not None:
         _save_config_json(config=run_config, file_path=config_file_path)
+
+
+def save_experiment_config(
+    output_path: Path,
+    experiment_config: ExperimentConfig,
+) -> None:
+    output_path.mkdir(parents=True, exist_ok=True)
+    file_path = output_path / EXPERIMENT_CONFIG_FILENAME
+
+    with file_path.open("w", encoding="utf-8") as f:
+        json.dump(_to_serializable(experiment_config), f, indent=4)

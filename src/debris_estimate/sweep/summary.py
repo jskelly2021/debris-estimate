@@ -6,16 +6,6 @@ from pathlib import Path
 DEFAULT_SUMMARY_FILENAME = "summary.csv"
 
 
-def collect_run_dirs(
-    runs_path: Path,
-) -> list[Path]:
-    return sorted(
-        path
-        for path in runs_path.iterdir()
-        if path.is_dir()
-    )
-
-
 def load_run_record(
     run_path: Path,
 ) -> dict:
@@ -32,37 +22,32 @@ def load_run_record(
     }
 
 
-def flatten_run_record(
-    record: dict
-) -> dict:
+def flatten_run_record(record: dict) -> dict:
     row = {
         "run_name": record["run_name"],
     }
 
-    def flatten_dict(
-        d: dict,
-        prefix: str,
-    ) -> None:
+    def flatten_dict(d: dict, prefix: str = ""):
         for key, value in d.items():
-            column_name = f"{prefix}_{key}" if prefix else key
+            column = f"{prefix}_{key}" if prefix else key
 
             if isinstance(value, dict):
-                flatten_dict(value, column_name)
+                flatten_dict(value, column)
             else:
-                row[column_name] = value
+                row[column] = value
 
-    flatten_dict(record["config"], "config")
-    flatten_dict(record["metrics"], "metrics")
+    flatten_dict(record["config"])
+    flatten_dict(record["metrics"])
 
     return row
 
 
-def build_summary_df(
-    runs_path: Path,
+def build_summary(
+    run_paths: Path,
 ) -> pd.DataFrame:
     rows = []
 
-    for run_path in collect_run_dirs(runs_path):
+    for run_path in run_paths:
         record = load_run_record(run_path)
         row = flatten_run_record(record)
         rows.append(row)
@@ -71,13 +56,13 @@ def build_summary_df(
 
 
 def write_summary(
-    summary_df: pd.DataFrame,
+    summary: pd.DataFrame,
     analysis_path: Path,
     summary_filename: str = DEFAULT_SUMMARY_FILENAME,
 ) -> None:
     analysis_path.mkdir(parents=True, exist_ok=True)
 
-    summary_df.to_csv(
+    summary.to_csv(
         analysis_path / summary_filename,
         index=False,
     )

@@ -46,7 +46,14 @@ class ModelConfig:
 
 @dataclass
 class RunConfig:
-    experiment_name: str | None = None
     run_name: str | None = "run"
     data: DataConfig = field(default_factory=DataConfig)
     model: ModelConfig = field(default_factory=ModelConfig)
+
+
+@dataclass
+class ExperimentConfig:
+    experiment_name: str | None = None
+    primary_metric: str | None = None
+    primary_metric_mode: str | None = "max"
+    swept_fields: list[str] | None = None
