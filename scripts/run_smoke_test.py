@@ -17,6 +17,7 @@ from debris_estimate.data import (
 from debris_estimate.model import StagedModel
 from debris_estimate.evaluation import create_evaluation_figures, evaluate_staged_model
 from debris_estimate.outputs import save_run_outputs
+from debris_estimate.sweep.summary import build_summary_df, write_summary
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = "outputs"
@@ -24,7 +25,7 @@ EXPERIMENT_NAME = "smoke_test"
 RUN_OUTPUT_DIR = "runs"
 ANALYSIS_OUTPUT_DIR = "analysis"
 OUTPUT_PATH = PROJECT_ROOT / OUTPUT_DIR / EXPERIMENT_NAME
-RUN_OUTPUT_PATH = OUTPUT_PATH / RUN_OUTPUT_DIR
+RUNS_OUTPUT_PATH = OUTPUT_PATH / RUN_OUTPUT_DIR
 ANALYSIS_OUTPUT_PATH = OUTPUT_PATH / ANALYSIS_OUTPUT_DIR
 
 
@@ -93,16 +94,22 @@ def run_smoke_test():
     )
 
     ### Output ###
-    log.info(f"Saving run outputs to {RUN_OUTPUT_PATH}...")
+    log.info(f"Saving run outputs to {RUNS_OUTPUT_PATH}...")
 
     save_run_outputs(
-        output_path=RUN_OUTPUT_PATH,
+        output_path=RUNS_OUTPUT_PATH,
         run_name=config.run_name,
         eval_results=eval_results,
         y_true=y_test,
         pred_results=pred_results,
         run_config=config,
         figure_groups=figure_groups,
+    )
+
+    summary = build_summary_df(runs_path=RUNS_OUTPUT_PATH)
+    write_summary(
+        summary_df=summary,
+        analysis_path=ANALYSIS_OUTPUT_PATH,
     )
 
 
