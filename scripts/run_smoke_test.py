@@ -21,7 +21,12 @@ from debris_estimate.outputs import save_run_outputs
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = "outputs"
 EXPERIMENT_NAME = "smoke_test"
+RUN_OUTPUT_DIR = "runs"
+ANALYSIS_OUTPUT_DIR = "analysis"
 OUTPUT_PATH = PROJECT_ROOT / OUTPUT_DIR / EXPERIMENT_NAME
+RUN_OUTPUT_PATH = OUTPUT_PATH / RUN_OUTPUT_DIR
+ANALYSIS_OUTPUT_PATH = OUTPUT_PATH / ANALYSIS_OUTPUT_DIR
+
 
 setup_logger()
 log = Log()
@@ -88,10 +93,10 @@ def run_smoke_test():
     )
 
     ### Output ###
-    log.info(f"Saving run outputs to {OUTPUT_PATH}...")
+    log.info(f"Saving run outputs to {RUN_OUTPUT_PATH}...")
 
     save_run_outputs(
-        output_path=OUTPUT_PATH,
+        output_path=RUN_OUTPUT_PATH,
         run_name=config.run_name,
         eval_results=eval_results,
         y_true=y_test,
