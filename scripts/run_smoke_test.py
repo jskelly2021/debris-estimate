@@ -111,11 +111,7 @@ def run_smoke_test():
 
     save_experiment_config(output_path=OUTPUT_PATH, experiment_config=experiment_config)
 
-    analyze_sweep(
-        runs_path=RUNS_OUTPUT_PATH,
-        analysis_path=ANALYSIS_OUTPUT_PATH,
-        experiment_config=experiment_config,
-    )
+    analyze_sweep(experiment_path=OUTPUT_PATH)
 
 
 def main() -> int:
