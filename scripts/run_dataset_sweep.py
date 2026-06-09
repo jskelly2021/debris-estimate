@@ -1,11 +1,17 @@
-"""Threshold sweep for staged_model."""
+"""Dataset sweep for staged_model."""
 
+import os
 from pathlib import Path
 from copy import deepcopy
 from debris_estimate.logger import setup_logger, Log
 from debris_estimate.config import RunConfig, ExperimentConfig
 from debris_estimate.presets import (
     H9_V6_DATA_CONFIG,
+    H8_V3_DATA_CONFIG,
+    H9_STP_V3_DATA_CONFIG,
+    GH9_V3_DATA_CONFIG,
+    GH9_STP_V3_DATA_CONFIG,
+    GH8_V3_DATA_CONFIG,
     BASELINE_MODEL_CONFIG,
 )
 from debris_estimate.data import (
@@ -22,7 +28,7 @@ from debris_estimate.sweep import analyze_sweep
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = "outputs"
-EXPERIMENT_NAME = "threshold_sweep"
+EXPERIMENT_NAME = "dataset_sweep"
 RUN_OUTPUT_DIR = "runs"
 ANALYSIS_OUTPUT_DIR = "analysis"
 OUTPUT_PATH = PROJECT_ROOT / OUTPUT_DIR / EXPERIMENT_NAME
@@ -32,54 +38,67 @@ ANALYSIS_OUTPUT_PATH = OUTPUT_PATH / ANALYSIS_OUTPUT_DIR
 setup_logger()
 log = Log()
 
+data_configs = [
+    H9_V6_DATA_CONFIG,
+    H8_V3_DATA_CONFIG,
+    H9_STP_V3_DATA_CONFIG,
+    GH9_V3_DATA_CONFIG,
+    GH9_STP_V3_DATA_CONFIG,
+    GH8_V3_DATA_CONFIG,
+]
 
-def run_threshold_sweep():
-    thresholds = list(range(290, 351, 2))
+experiment_config = ExperimentConfig(
+    experiment_name=EXPERIMENT_NAME,
+    primary_metric="system_r2",
+    primary_metric_mode="max",
+    swept_fields=["data.dataset"],
+)
 
-    base_config = RunConfig(
-        run_name="base",
-        data=H9_V6_DATA_CONFIG,
-        model=BASELINE_MODEL_CONFIG,
-    )
+base_config = RunConfig(
+    run_name="base",
+    data=H9_V6_DATA_CONFIG,
+    model=BASELINE_MODEL_CONFIG,
+)
 
-    data_path = PROJECT_ROOT / base_config.data.dataset
-    df = load_dataset(path=data_path)
 
-    ### Preprocessing ###
-    X = preprocess_features(
-        df=df,
-        config=base_config.data.preprocess,
-    )
-
-    ### Splitting ###
-    y = df["VolBoth_sum"]
-
-    X_train, X_test, y_train, y_test = split_data(
-        X=X,
-        y=y,
-        config=base_config.data.split,
-    )
-
-    ### Clipping ###
-    X_train_clipped, X_test_clipped = clip_features(
-        X_train=X_train,
-        X_test=X_test,
-        exclude_cols=base_config.data.preprocess.exclude_clip_cols,
-        config=base_config.data.clip,
-    )
-
-    y_train_clipped, _, _, _ = clip_targets(
-        y=y_train,
-        config=base_config.data.clip,
-    )
-
-    ### Training ###
-    for threshold in thresholds:
-        log.info("Training theshold=%d", threshold)
+def run_dataset_sweep():
+    ### Dataset Sweep ###
+    for data_config in data_configs:
         config = deepcopy(base_config)
-        config.run_name = f"threshold_{threshold}"
-        config.model.threshold = threshold
+        config.run_name = f"dataset_{os.path.basename(data_config.dataset)}"
+        config.data = data_config
 
+        data_path = PROJECT_ROOT / config.data.dataset
+        df = load_dataset(path=data_path)
+
+        ### Preprocessing ###
+        X = preprocess_features(
+            df=df,
+            config=config.data.preprocess,
+        )
+        y = df["VolBoth_sum"]
+
+        ### Splitting ###
+        X_train, X_test, y_train, y_test = split_data(
+            X=X,
+            y=y,
+            config=config.data.split,
+        )
+
+        ### Clipping ###
+        X_train_clipped, X_test_clipped = clip_features(
+            X_train=X_train,
+            X_test=X_test,
+            exclude_cols=config.data.preprocess.exclude_clip_cols,
+            config=config.data.clip,
+        )
+
+        y_train_clipped, _, _, _ = clip_targets(
+            y=y_train,
+            config=config.data.clip,
+        )
+
+        ### Training ###
         staged_model = StagedModel(config=config.model)
         staged_model.fit(X_train=X_train_clipped, y_train=y_train_clipped)
 
@@ -111,12 +130,6 @@ def run_threshold_sweep():
             figure_groups=figure_groups,
         )
 
-    experiment_config = ExperimentConfig(
-        experiment_name=EXPERIMENT_NAME,
-        primary_metric="system_r2",
-        primary_metric_mode="max",
-        swept_fields=["model.threshold"],
-    )
     save_experiment_config(
         output_path=OUTPUT_PATH,
         experiment_config=experiment_config
@@ -127,12 +140,12 @@ def run_threshold_sweep():
 
 def main() -> int:
     try:
-        run_threshold_sweep()
-        log.info("threshold sweep completed successfully.")
+        run_dataset_sweep()
+        log.info(f"{EXPERIMENT_NAME} completed successfully.")
         return 0
 
     except Exception as e:
-        log.error(f"threshold sweep failed: {e}")
+        log.error(f"{EXPERIMENT_NAME} failed: {e}")
         return 1
 
 

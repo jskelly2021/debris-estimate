@@ -6,7 +6,8 @@
 
 17. Sweep scripts
 18. Hyperparameter tunning scripts
-19. SMOGN
+19. Validation
+20. SMOGN
 
 ### Completed
 

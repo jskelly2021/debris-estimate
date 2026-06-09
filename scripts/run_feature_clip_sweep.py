@@ -1,4 +1,4 @@
-"""Threshold sweep for staged_model."""
+"""Feature clip sweep for staged_model."""
 
 from pathlib import Path
 from copy import deepcopy
@@ -22,7 +22,7 @@ from debris_estimate.sweep import analyze_sweep
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = "outputs"
-EXPERIMENT_NAME = "threshold_sweep"
+EXPERIMENT_NAME = "feature_clip_sweep"
 RUN_OUTPUT_DIR = "runs"
 ANALYSIS_OUTPUT_DIR = "analysis"
 OUTPUT_PATH = PROJECT_ROOT / OUTPUT_DIR / EXPERIMENT_NAME
@@ -33,8 +33,8 @@ setup_logger()
 log = Log()
 
 
-def run_threshold_sweep():
-    thresholds = list(range(290, 351, 2))
+def run_feature_clip_sweep():
+    clips = [0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 0.98, 0.99, 1.0]
 
     base_config = RunConfig(
         run_name="base",
@@ -60,26 +60,28 @@ def run_threshold_sweep():
         config=base_config.data.split,
     )
 
-    ### Clipping ###
-    X_train_clipped, X_test_clipped = clip_features(
-        X_train=X_train,
-        X_test=X_test,
-        exclude_cols=base_config.data.preprocess.exclude_clip_cols,
-        config=base_config.data.clip,
-    )
+    ### Feature Clip Sweep ###
+    for clip in clips:
+        ### Clipping ###
+        log.info("Training feature clip=%d", clip)
+        config = deepcopy(base_config)
+        config.run_name = f"clip_{clip}"
+        config.data.clip.feature_clip_percentile = clip
 
-    y_train_clipped, _, _, _ = clip_targets(
-        y=y_train,
-        config=base_config.data.clip,
-    )
+
+        X_train_clipped, X_test_clipped = clip_features(
+            X_train=X_train,
+            X_test=X_test,
+            exclude_cols=config.data.preprocess.exclude_clip_cols,
+            config=config.data.clip,
+        )
+
+        y_train_clipped, _, _, _ = clip_targets(
+            y=y_train,
+            config=config.data.clip,
+        )
 
     ### Training ###
-    for threshold in thresholds:
-        log.info("Training theshold=%d", threshold)
-        config = deepcopy(base_config)
-        config.run_name = f"threshold_{threshold}"
-        config.model.threshold = threshold
-
         staged_model = StagedModel(config=config.model)
         staged_model.fit(X_train=X_train_clipped, y_train=y_train_clipped)
 
@@ -115,7 +117,7 @@ def run_threshold_sweep():
         experiment_name=EXPERIMENT_NAME,
         primary_metric="system_r2",
         primary_metric_mode="max",
-        swept_fields=["model.threshold"],
+        swept_fields=["data.clip.feature_clip_percentile"],
     )
     save_experiment_config(
         output_path=OUTPUT_PATH,
@@ -127,12 +129,12 @@ def run_threshold_sweep():
 
 def main() -> int:
     try:
-        run_threshold_sweep()
-        log.info("threshold sweep completed successfully.")
+        run_feature_clip_sweep()
+        log.info("feature clip sweep completed successfully.")
         return 0
 
     except Exception as e:
-        log.error(f"threshold sweep failed: {e}")
+        log.error(f"feature clip sweep failed: {e}")
         return 1
 
 
