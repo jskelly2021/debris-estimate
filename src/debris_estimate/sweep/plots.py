@@ -1,9 +1,49 @@
 """Build sweep analysis plots."""
 
-from pathlib import Path
-
-import matplotlib.pyplot as plt
 import pandas as pd
+import matplotlib.pyplot as plt
+
+from pathlib import Path
+from pandas.api.types import is_numeric_dtype
+
+
+def is_numeric_param(summary: pd.DataFrame, param: str) -> bool:
+    series = summary[param].dropna()
+
+    if is_numeric_dtype(series):
+        return True
+
+    try:
+        pd.to_numeric(series)
+        return True
+    except (ValueError, TypeError):
+        return False
+
+
+def plot_category_vs_metric(
+    summary: pd.DataFrame,
+    param: str,
+    metric: str,
+    output_path: str | Path,
+) -> None:
+    plot_df = (
+        summary[[param, metric]]
+        .dropna()
+        .groupby(param)[metric]
+        .mean()
+        .sort_values(ascending=False)
+    )
+
+    if plot_df.empty:
+        return
+
+    plt.figure()
+    plot_df.plot(kind="bar")
+    plt.ylabel(metric)
+    plt.title(f"{param} vs {metric}")
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
 
 
 def plot_param_vs_metric(
@@ -60,9 +100,18 @@ def build_sweep_plots(
 
         for metric in available_metrics:
             filename = f"{param}_vs_{metric}.png".replace(".", "_")
-            plot_param_vs_metric(
-                summary=summary,
-                param=param,
-                metric=metric,
-                output_path=output_path / filename,
-            )
+
+            if is_numeric_param(summary=summary, param=param):
+                plot_param_vs_metric(
+                    summary=summary,
+                    param=param,
+                    metric=metric,
+                    output_path=output_path / filename,
+                )
+            else:
+                plot_category_vs_metric(
+                    summary=summary,
+                    param=param,
+                    metric=metric,
+                    output_path=output_path / filename,
+                )

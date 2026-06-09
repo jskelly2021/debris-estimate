@@ -4,7 +4,6 @@
 
 ### Next up
 
-17. Sweep scripts
 18. Hyperparameter tunning scripts
 19. Validation
 20. SMOGN
@@ -27,3 +26,4 @@
 14. Binary distance features
 15. Hazard feature engineering
 16. Ordinal Encoding
+17. Sweep scripts
