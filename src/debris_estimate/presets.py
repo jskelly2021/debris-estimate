@@ -1,14 +1,17 @@
 """Presets for default configurations of the debris estimation pipeline."""
 
+from dataclasses import replace
+from copy import deepcopy
 from debris_estimate.config import (
     PreprocessConfig,
     SplitConfig,
     ClipConfig,
     DataConfig,
     ModelConfig,
+    RunConfig,
 )
 
-
+### Baseline ###
 BASELINE_DROP_COLS = [
     "GRID_ID",
     "age_med",
@@ -38,7 +41,6 @@ BASELINE_HAZARD_FEATURES = {
 }
 BASELINE_EXCLUDE_CLIP_COLS = ["sqm", "val_struct", "val_cont", "fld_pct", "evac_degree", "fld_zone"]
 
-
 BASELINE_PREPROCESS_CONFIG = PreprocessConfig(
     drop_cols=BASELINE_DROP_COLS,
     log_cols=BASELINE_LOG_COLS,
@@ -49,74 +51,15 @@ BASELINE_PREPROCESS_CONFIG = PreprocessConfig(
     exclude_clip_cols=BASELINE_EXCLUDE_CLIP_COLS,
 )
 
-
-H8_V3_PREPROCESS_CONFIG = BASELINE_PREPROCESS_CONFIG
-H9_V6_PREPROCESS_CONFIG = BASELINE_PREPROCESS_CONFIG
-H9_STP_V3_PREPROCESS_CONFIG = BASELINE_PREPROCESS_CONFIG
-GH8_V3_PREPROCESS_CONFIG = BASELINE_PREPROCESS_CONFIG
-GH9_V3_PREPROCESS_CONFIG = BASELINE_PREPROCESS_CONFIG
-GH9_STP_V3_PREPROCESS_CONFIG = BASELINE_PREPROCESS_CONFIG
-
-
 BASELINE_SPLIT_CONFIG = SplitConfig(
     test_size=0.2,
     random_state=42
 )
 
-
 BASELINE_CLIP_CONFIG = ClipConfig(
     feature_clip_percentile=0.95,
     target_clip_percentile=0.98
 )
-
-
-H9_V6_DATA_CONFIG = DataConfig(
-    dataset = "data/h9_debrisv6.csv",
-    preprocess = H9_V6_PREPROCESS_CONFIG,
-    split = BASELINE_SPLIT_CONFIG,
-    clip = BASELINE_CLIP_CONFIG,
-)
-
-
-H8_V3_DATA_CONFIG = DataConfig(
-    dataset="data/h8_debrisv3.csv",
-    preprocess = H8_V3_PREPROCESS_CONFIG,
-    split = BASELINE_SPLIT_CONFIG,
-    clip = BASELINE_CLIP_CONFIG,
-)
-
-
-H9_STP_V3_DATA_CONFIG = DataConfig(
-    dataset="data/h9_StP_debrisv3.csv",
-    preprocess = H9_STP_V3_PREPROCESS_CONFIG,
-    split = BASELINE_SPLIT_CONFIG,
-    clip = BASELINE_CLIP_CONFIG,
-)
-
-
-GH9_V3_DATA_CONFIG = DataConfig(
-    dataset="data/GrideH9_v3.csv",
-    preprocess = GH9_V3_PREPROCESS_CONFIG,
-    split = BASELINE_SPLIT_CONFIG,
-    clip = BASELINE_CLIP_CONFIG,
-)
-
-
-GH9_STP_V3_DATA_CONFIG = DataConfig(
-    dataset = "data/GrideH9_StP_v3.csv",
-    preprocess = GH9_STP_V3_PREPROCESS_CONFIG,
-    split = BASELINE_SPLIT_CONFIG,
-    clip = BASELINE_CLIP_CONFIG,
-)
-
-
-GH8_V3_DATA_CONFIG = DataConfig(
-    dataset = "data/GrideH8_v3.csv",
-    preprocess = GH8_V3_PREPROCESS_CONFIG,
-    split = BASELINE_SPLIT_CONFIG,
-    clip = BASELINE_CLIP_CONFIG,
-)
-
 
 DEFAULT_CLF_PARAMS_XGB = dict(
     n_estimators     = 50,
@@ -139,9 +82,171 @@ DEFAULT_REG_PARAMS_XGB = dict(
 
 
 BASELINE_MODEL_CONFIG = ModelConfig(
-    zero_pos_params = DEFAULT_CLF_PARAMS_XGB,
-    tier_params = DEFAULT_CLF_PARAMS_XGB,
-    low_params = DEFAULT_REG_PARAMS_XGB,
-    high_params = DEFAULT_REG_PARAMS_XGB,
+    zero_pos_params = deepcopy(DEFAULT_CLF_PARAMS_XGB),
+    tier_params = deepcopy(DEFAULT_CLF_PARAMS_XGB),
+    low_params = deepcopy(DEFAULT_REG_PARAMS_XGB),
+    high_params = deepcopy(DEFAULT_REG_PARAMS_XGB),
     threshold = 300
+)
+
+
+### H8 V3 ###
+H8_V3_PREPROCESS_CONFIG = BASELINE_PREPROCESS_CONFIG
+
+H8_V3_CLIP_CONFIG = ClipConfig(
+    feature_clip_percentile=0.95,
+    target_clip_percentile=0.99,
+)
+
+H8_V3_DATA_CONFIG = DataConfig(
+    dataset="data/h8_debrisv3.csv",
+    preprocess = H8_V3_PREPROCESS_CONFIG,
+    split = BASELINE_SPLIT_CONFIG,
+    clip = H8_V3_CLIP_CONFIG,
+)
+
+H8_V3_MODEL_CONFIG = replace(
+    BASELINE_MODEL_CONFIG,
+    threshold = 800,
+)
+
+H8_V3_RUN_CONFIG = RunConfig(
+    run_name = "h8_debrisv3",
+    data = H8_V3_DATA_CONFIG,
+    model = H8_V3_MODEL_CONFIG,
+)
+
+
+### H9 V6 ###
+H9_V6_PREPROCESS_CONFIG = BASELINE_PREPROCESS_CONFIG
+
+H9_V6_CLIP_CONFIG = ClipConfig(
+    feature_clip_percentile=0.95,
+    target_clip_percentile=0.99,
+)
+
+H9_V6_DATA_CONFIG = DataConfig(
+    dataset = "data/h9_debrisv6.csv",
+    preprocess = H9_V6_PREPROCESS_CONFIG,
+    split = BASELINE_SPLIT_CONFIG,
+    clip = H9_V6_CLIP_CONFIG,
+)
+
+H9_V6_MODEL_CONFIG = replace(
+    BASELINE_MODEL_CONFIG,
+    threshold = 300,
+)
+
+H9_V6_RUN_CONFIG = RunConfig(
+    run_name = "h9_debrisv6",
+    data = H9_V6_DATA_CONFIG,
+    model = H9_V6_MODEL_CONFIG,
+)
+
+
+### H9 StP V3 ###
+H9_STP_V3_PREPROCESS_CONFIG = BASELINE_PREPROCESS_CONFIG
+
+H9_STP_V3_CLIP_CONFIG = ClipConfig(
+    feature_clip_percentile=0.95,
+    target_clip_percentile=0.99,
+)
+
+H9_STP_V3_DATA_CONFIG = DataConfig(
+    dataset="data/h9_StP_debrisv3.csv",
+    preprocess = H9_STP_V3_PREPROCESS_CONFIG,
+    split = BASELINE_SPLIT_CONFIG,
+    clip = H9_STP_V3_CLIP_CONFIG,
+)
+
+H9_STP_V3_MODEL_CONFIG = replace(
+    BASELINE_MODEL_CONFIG,
+    threshold = 100,
+)
+
+H9_STP_V3_RUN_CONFIG = RunConfig(
+    run_name = "h9_StP_debrisv3",
+    data = H9_STP_V3_DATA_CONFIG,
+    model = H9_STP_V3_MODEL_CONFIG,
+)
+
+
+### GH8 V3 ###
+GH8_V3_PREPROCESS_CONFIG = BASELINE_PREPROCESS_CONFIG
+
+GH8_V3_CLIP_CONFIG = ClipConfig(
+    feature_clip_percentile=0.95,
+    target_clip_percentile=0.99,
+)
+
+GH8_V3_DATA_CONFIG = DataConfig(
+    dataset = "data/GrideH8_v3.csv",
+    preprocess = GH8_V3_PREPROCESS_CONFIG,
+    split = BASELINE_SPLIT_CONFIG,
+    clip = GH8_V3_CLIP_CONFIG,
+)
+
+GH8_V3_MODEL_CONFIG = replace(
+    BASELINE_MODEL_CONFIG,
+    threshold = 800,
+)
+
+GH8_V3_RUN_CONFIG = RunConfig(
+    run_name = "GrideH8_v3",
+    data = GH8_V3_DATA_CONFIG,
+    model = GH8_V3_MODEL_CONFIG,
+)
+
+
+### GH9 V3 ###
+GH9_V3_PREPROCESS_CONFIG = BASELINE_PREPROCESS_CONFIG
+
+GH9_V3_CLIP_CONFIG = ClipConfig(
+    feature_clip_percentile=0.95,
+    target_clip_percentile=0.99,
+)
+
+GH9_V3_DATA_CONFIG = DataConfig(
+    dataset="data/GrideH9_v3.csv",
+    preprocess = GH9_V3_PREPROCESS_CONFIG,
+    split = BASELINE_SPLIT_CONFIG,
+    clip = GH9_V3_CLIP_CONFIG,
+)
+
+GH9_V3_MODEL_CONFIG = replace(
+    BASELINE_MODEL_CONFIG,
+    threshold = 2000,
+)
+
+GH9_V3_RUN_CONFIG = RunConfig(
+    run_name = "GrideH9_v3",
+    data = GH9_V3_DATA_CONFIG,
+    model = GH9_V3_MODEL_CONFIG,
+)
+
+
+### GH9 StP V3 ###
+GH9_STP_V3_PREPROCESS_CONFIG = BASELINE_PREPROCESS_CONFIG
+
+GH9_STP_V3_CLIP_CONFIG = ClipConfig(
+    feature_clip_percentile=0.95,
+    target_clip_percentile=0.99,
+)
+
+GH9_STP_V3_DATA_CONFIG = DataConfig(
+    dataset = "data/GrideH9_StP_v3.csv",
+    preprocess = GH9_STP_V3_PREPROCESS_CONFIG,
+    split = BASELINE_SPLIT_CONFIG,
+    clip = GH9_STP_V3_CLIP_CONFIG,
+)
+
+GH9_STP_V3_MODEL_CONFIG = replace(
+    BASELINE_MODEL_CONFIG,
+    threshold = 400,
+)
+
+GH9_STP_V3_RUN_CONFIG = RunConfig(
+    run_name = "GrideH9_StP_v3",
+    data = GH9_STP_V3_DATA_CONFIG,
+    model = GH9_STP_V3_MODEL_CONFIG,
 )
