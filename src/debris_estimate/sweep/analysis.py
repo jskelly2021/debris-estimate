@@ -46,7 +46,7 @@ def analyze_sweep(experiment_path: Path) -> None:
     leaderboard_file_path = analysis_path / LEADERBOARD_FILENAME
     leaderboard.to_csv(leaderboard_file_path, index=False)
 
-    plots_path = experiment_path / PLOTS_DIR
+    plots_path = analysis_path / PLOTS_DIR
     build_sweep_plots(
         summary=summary,
         swept_fields=experiment_config.swept_fields,

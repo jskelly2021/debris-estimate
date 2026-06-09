@@ -73,6 +73,7 @@ def run_dataset_threshold_sweep():
             base_config=run_config,
             experiment_config=experiment_config,
             thresholds=thresholds[dataset_name],
+            output_dir="outputs/threshold_sweeps"
         )
 
 

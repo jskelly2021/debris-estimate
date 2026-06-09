@@ -60,8 +60,9 @@ def run_threshold_sweep(
     base_config: RunConfig | None = DEFAULT_RUN_CONFIG,
     experiment_config: ExperimentConfig | None = DEFAULT_EXPERIMENT_CONFIG,
     thresholds: list[int] | None = DEFAULT_THRESHOLDS,
+    output_dir: str | Path = OUTPUT_DIR,
 ):
-    output_path = PROJECT_ROOT / OUTPUT_DIR / experiment_config.experiment_name
+    output_path = PROJECT_ROOT / output_dir / experiment_config.experiment_name
     runs_output_path = output_path / RUN_OUTPUT_DIR
 
     data_path = PROJECT_ROOT / base_config.data.dataset
