@@ -6,10 +6,6 @@ from pathlib import Path
 from copy import deepcopy
 from debris_estimate.logger import setup_logger, Log
 from debris_estimate.config import RunConfig, ExperimentConfig
-from debris_estimate.presets import (
-    H9_V6_DATA_CONFIG,
-    BASELINE_MODEL_CONFIG,
-)
 from debris_estimate.data import (
     load_dataset,
     preprocess_features,
@@ -21,6 +17,14 @@ from debris_estimate.model import StagedModel
 from debris_estimate.evaluation import create_evaluation_figures, evaluate_staged_model
 from debris_estimate.outputs import save_run_outputs, save_experiment_config
 from debris_estimate.sweep import analyze_sweep
+from debris_estimate.presets import (
+    H9_V6_RUN_CONFIG,
+    H8_V3_RUN_CONFIG,
+    H9_STP_V3_RUN_CONFIG,
+    GH9_V3_RUN_CONFIG,
+    GH9_STP_V3_RUN_CONFIG,
+    GH8_V3_RUN_CONFIG,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = "outputs"
@@ -35,13 +39,9 @@ DEFAULT_EXPERIMENT_CONFIG = ExperimentConfig(
     swept_fields=["model.threshold"],
 )
 
-DEFAULT_RUN_CONFIG = RunConfig(
-    run_name="base",
-    data=H9_V6_DATA_CONFIG,
-    model=BASELINE_MODEL_CONFIG,
-)
 
-DEFAULT_THRESHOLDS = list(range(100, 1000, 100))
+DEFAULT_THRESHOLDS = [100, 200, 300, 400, 800, 1000, 1500, 2000, 2500, 3000, 3500, 4000]
+
 
 setup_logger(verbose=False)
 log = Log()
@@ -57,7 +57,7 @@ def is_valid_threshold(y_train: pd.Series, threshold: float, min_samples: int = 
 
 
 def run_threshold_sweep(
-    base_config: RunConfig | None = DEFAULT_RUN_CONFIG,
+    base_config: RunConfig | None = GH8_V3_RUN_CONFIG,
     experiment_config: ExperimentConfig | None = DEFAULT_EXPERIMENT_CONFIG,
     thresholds: list[int] | None = DEFAULT_THRESHOLDS,
     output_dir: str | Path = OUTPUT_DIR,

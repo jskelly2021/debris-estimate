@@ -4,8 +4,12 @@ from pathlib import Path
 from debris_estimate.logger import setup_logger, Log
 from debris_estimate.config import RunConfig, ExperimentConfig
 from debris_estimate.presets import (
-    H9_V6_DATA_CONFIG,
-    BASELINE_MODEL_CONFIG,
+    H9_V6_RUN_CONFIG,
+    H8_V3_RUN_CONFIG,
+    H9_STP_V3_RUN_CONFIG,
+    GH9_V3_RUN_CONFIG,
+    GH9_STP_V3_RUN_CONFIG,
+    GH8_V3_RUN_CONFIG,
 )
 from debris_estimate.data import (
     load_dataset,
@@ -28,17 +32,11 @@ OUTPUT_PATH = PROJECT_ROOT / OUTPUT_DIR / EXPERIMENT_NAME
 RUNS_OUTPUT_PATH = OUTPUT_PATH / RUN_OUTPUT_DIR
 ANALYSIS_OUTPUT_PATH = OUTPUT_PATH / ANALYSIS_OUTPUT_DIR
 
-DEFAULT_RUN_CONFIG = RunConfig(
-    run_name="run01",
-    data=H9_V6_DATA_CONFIG,
-    model=BASELINE_MODEL_CONFIG,
-)
-
 setup_logger(verbose=True)
 log = Log()
 
 
-def run_smoke_test(config: RunConfig | None = DEFAULT_RUN_CONFIG):
+def run_smoke_test(config: RunConfig | None = GH8_V3_RUN_CONFIG):
     data_path = PROJECT_ROOT / config.data.dataset
     df = load_dataset(path=data_path)
 

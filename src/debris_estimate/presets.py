@@ -94,8 +94,8 @@ BASELINE_MODEL_CONFIG = ModelConfig(
 H8_V3_PREPROCESS_CONFIG = BASELINE_PREPROCESS_CONFIG
 
 H8_V3_CLIP_CONFIG = ClipConfig(
-    feature_clip_percentile=0.95,
-    target_clip_percentile=0.99,
+    feature_clip_percentile=0.99,
+    target_clip_percentile=0.98,
 )
 
 H8_V3_DATA_CONFIG = DataConfig(
@@ -121,8 +121,8 @@ H8_V3_RUN_CONFIG = RunConfig(
 H9_V6_PREPROCESS_CONFIG = BASELINE_PREPROCESS_CONFIG
 
 H9_V6_CLIP_CONFIG = ClipConfig(
-    feature_clip_percentile=0.95,
-    target_clip_percentile=0.99,
+    feature_clip_percentile=0.98,
+    target_clip_percentile=1.0,
 )
 
 H9_V6_DATA_CONFIG = DataConfig(
@@ -148,8 +148,8 @@ H9_V6_RUN_CONFIG = RunConfig(
 H9_STP_V3_PREPROCESS_CONFIG = BASELINE_PREPROCESS_CONFIG
 
 H9_STP_V3_CLIP_CONFIG = ClipConfig(
-    feature_clip_percentile=0.95,
-    target_clip_percentile=0.99,
+    feature_clip_percentile=0.85,
+    target_clip_percentile=0.98,
 )
 
 H9_STP_V3_DATA_CONFIG = DataConfig(
@@ -175,8 +175,8 @@ H9_STP_V3_RUN_CONFIG = RunConfig(
 GH8_V3_PREPROCESS_CONFIG = BASELINE_PREPROCESS_CONFIG
 
 GH8_V3_CLIP_CONFIG = ClipConfig(
-    feature_clip_percentile=0.95,
-    target_clip_percentile=0.99,
+    feature_clip_percentile=0.99,
+    target_clip_percentile=0.95,
 )
 
 GH8_V3_DATA_CONFIG = DataConfig(
@@ -203,7 +203,7 @@ GH9_V3_PREPROCESS_CONFIG = BASELINE_PREPROCESS_CONFIG
 
 GH9_V3_CLIP_CONFIG = ClipConfig(
     feature_clip_percentile=0.95,
-    target_clip_percentile=0.99,
+    target_clip_percentile=0.98,
 )
 
 GH9_V3_DATA_CONFIG = DataConfig(
@@ -229,8 +229,8 @@ GH9_V3_RUN_CONFIG = RunConfig(
 GH9_STP_V3_PREPROCESS_CONFIG = BASELINE_PREPROCESS_CONFIG
 
 GH9_STP_V3_CLIP_CONFIG = ClipConfig(
-    feature_clip_percentile=0.95,
-    target_clip_percentile=0.99,
+    feature_clip_percentile=0.98,
+    target_clip_percentile=0.98,
 )
 
 GH9_STP_V3_DATA_CONFIG = DataConfig(

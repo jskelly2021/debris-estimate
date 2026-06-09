@@ -4,6 +4,8 @@
 
 ### Next up
 
+18. Feature Importance
+19. Tier predicition as feature
 18. Hyperparameter tunning scripts
 19. Validation
 20. SMOGN
