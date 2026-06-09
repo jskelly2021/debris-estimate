@@ -108,7 +108,6 @@ def run_smoke_test():
             primary_metric_mode="max",
             swept_fields=None,
         )
-
     save_experiment_config(output_path=OUTPUT_PATH, experiment_config=experiment_config)
 
     analyze_sweep(experiment_path=OUTPUT_PATH)
