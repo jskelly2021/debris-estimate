@@ -14,8 +14,8 @@ def load_dataset(path: str | Path) -> pd.DataFrame:
     if not data_path.exists():
         raise FileNotFoundError(f"Dataset file not found at {data_path}")
 
-    log.info("Loading dataset from %s", data_path)
+    log.debug("Loading dataset from %s", data_path)
     df = pd.read_csv(data_path)
 
-    log.info("Dataset loaded with shape %s", df.shape)
+    log.debug("Dataset loaded with shape %s", df.shape)
     return df

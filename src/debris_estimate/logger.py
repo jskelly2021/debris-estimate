@@ -11,21 +11,31 @@ BLUE = "\033[94m"
 CYAN = "\033[96m"
 
 
-def setup_logger():
-    """Configure process-wide console logging."""
-
+def setup_logger(verbose: bool = False):
     logging.basicConfig(
         level=logging.INFO,
         format="%(message)s",
     )
 
+    logging.getLogger("MultiLabelModel").setLevel(
+        logging.DEBUG if verbose else logging.INFO
+    )
+
+    logging.getLogger("matplotlib").setLevel(logging.WARNING)
+    logging.getLogger("PIL").setLevel(logging.WARNING)
+
 
 class Log:
-    def __init__(self):
+    def __init__(self, verbose: bool = True):
         self.log = logging.getLogger("MultiLabelModel")
+        self.verbose = verbose
 
     def info(self, text: str, *args) -> None:
-        self.log.info(f"{GREEN}[INFO]{RESET} {text}", *args)
+        if self.verbose:
+            self.log.info(f"{GREEN}[INFO]{RESET} {text}", *args)
+
+    def debug(self, text: str, *args) -> None:
+        self.log.debug(f"{CYAN}[DEBUG]{RESET} {text}", *args)
 
     def warn(self, text: str, *args) -> None:
         self.log.warning(f"{YELLOW}[WARN]{RESET} {text}", *args)

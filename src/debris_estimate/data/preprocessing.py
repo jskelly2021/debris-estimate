@@ -143,7 +143,7 @@ def preprocess_features(
     df: pd.DataFrame,
     config: PreprocessConfig
 ) -> pd.DataFrame:
-    log.info("Starting data preprocessing...")
+    log.debug("Starting data preprocessing...")
     df = df.copy()
 
     df = _remove_leakage_columns(df=df, drop_cols=config.drop_cols)
@@ -153,5 +153,5 @@ def preprocess_features(
     df = _encode_ordinals(df=df, ordinal_maps=config.ordinal_maps)
     df = _one_hot_encode_columns(df=df, categorical_cols=config.categorical_cols)
 
-    log.info("Data preprocessing completed.")
+    log.debug("Data preprocessing completed.")
     return df

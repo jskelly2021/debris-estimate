@@ -86,7 +86,7 @@ def clip_targets(
     quantile_values = y[y > 0] if config.positive_only_target_clip else y
 
     if not quantile_values.empty:
-        log.info(f"Clipping training targets at {config.target_clip_percentile:.3f}")
+        log.debug(f"Clipping training targets at {config.target_clip_percentile:.3f}")
         upper = quantile_values.quantile(config.target_clip_percentile)
 
         clip_mask = y > upper

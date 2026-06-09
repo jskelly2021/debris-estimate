@@ -20,12 +20,12 @@ def train_zero_pos_classifier(
 
     X_resampled, y_resampled = apply_smote(X_train, y_train)
 
-    log.info("Training zero vs positive classfier...")
+    log.debug("Training zero vs positive classfier...")
 
     model = XGBClassifier(**params)
     model.fit(X_resampled, y_resampled)
 
-    log.info("Zero vs positive classifier training complete.")
+    log.debug("Zero vs positive classifier training complete.")
 
     return model
 
@@ -40,12 +40,12 @@ def train_tier_classifier(
 
     X_resampled, y_resampled = apply_smote(X_train_pos, y_tier)
 
-    log.info("Training tier classfier...")
+    log.debug("Training tier classfier...")
 
     model = XGBClassifier(**params)
     model.fit(X_resampled, y_resampled)
 
-    log.info("Tier classifier training complete.")
+    log.debug("Tier classifier training complete.")
 
     return model
 
@@ -72,7 +72,7 @@ def train_low_high_regressors(
     X_high = X_train_pos.loc[high_mask]
     y_high = np.log1p(y_train_pos.loc[high_mask])
 
-    log.info("Training low/high regressors...")
+    log.debug("Training low/high regressors...")
 
     model_low = XGBRegressor(**low_params)
     model_low.fit(X_low, y_low)
@@ -80,6 +80,6 @@ def train_low_high_regressors(
     model_high = XGBRegressor(**high_params)
     model_high.fit(X_high, y_high)
 
-    log.info("Low/high regressor training complete.")
+    log.debug("Low/high regressor training complete.")
 
     return model_low, model_high

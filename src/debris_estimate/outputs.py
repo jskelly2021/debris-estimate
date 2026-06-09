@@ -7,12 +7,10 @@ import matplotlib.pyplot as plt
 
 from pathlib import Path
 from dataclasses import asdict, is_dataclass
-from debris_estimate.logger import Log
 from debris_estimate.config import RunConfig, ExperimentConfig
 from debris_estimate.evaluation.results import EvaluationResults
 from debris_estimate.model import PredictionResults
 
-log = Log()
 
 EXPERIMENT_CONFIG_FILENAME = "experiment.json"
 METRICS_FILENAME = "metrics.json"

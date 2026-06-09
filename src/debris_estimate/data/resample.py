@@ -32,11 +32,11 @@ def apply_smote(
         )
         return X, y
 
-    log.info("Applying SMOTE. Class distribution before: %s", counts.to_dict())
+    log.debug("Applying SMOTE. Class distribution before: %s", counts.to_dict())
 
     smote = SMOTE(random_state=42)
     X_resampled, y_resampled = smote.fit_resample(X, y)
 
-    log.info("Resampled class distribution: %s", pd.Series(y_resampled).value_counts().to_dict())
+    log.debug("Resampled class distribution: %s", pd.Series(y_resampled).value_counts().to_dict())
 
     return X_resampled, y_resampled

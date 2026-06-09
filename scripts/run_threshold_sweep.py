@@ -1,5 +1,7 @@
 """Threshold sweep for staged_model."""
 
+import pandas as pd
+
 from pathlib import Path
 from copy import deepcopy
 from debris_estimate.logger import setup_logger, Log
@@ -22,12 +24,9 @@ from debris_estimate.sweep import analyze_sweep
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = "outputs"
-EXPERIMENT_NAME = "threshold_sweep"
 RUN_OUTPUT_DIR = "runs"
 ANALYSIS_OUTPUT_DIR = "analysis"
-OUTPUT_PATH = PROJECT_ROOT / OUTPUT_DIR / EXPERIMENT_NAME
-RUNS_OUTPUT_PATH = OUTPUT_PATH / RUN_OUTPUT_DIR
-ANALYSIS_OUTPUT_PATH = OUTPUT_PATH / ANALYSIS_OUTPUT_DIR
+EXPERIMENT_NAME = "threshold_sweep"
 
 DEFAULT_EXPERIMENT_CONFIG = ExperimentConfig(
     experiment_name=EXPERIMENT_NAME,
@@ -44,8 +43,17 @@ DEFAULT_RUN_CONFIG = RunConfig(
 
 DEFAULT_THRESHOLDS = list(range(100, 1000, 100))
 
-setup_logger()
+setup_logger(verbose=False)
 log = Log()
+
+
+def is_valid_threshold(y_train: pd.Series, threshold: float, min_samples: int = 5) -> bool:
+    y_pos = y_train[y_train > 0]
+
+    low_count = int((y_pos <= threshold).sum())
+    high_count = int((y_pos > threshold).sum())
+
+    return low_count >= min_samples and high_count >= min_samples
 
 
 def run_threshold_sweep(
@@ -53,6 +61,9 @@ def run_threshold_sweep(
     experiment_config: ExperimentConfig | None = DEFAULT_EXPERIMENT_CONFIG,
     thresholds: list[int] | None = DEFAULT_THRESHOLDS,
 ):
+    output_path = PROJECT_ROOT / OUTPUT_DIR / experiment_config.experiment_name
+    runs_output_path = output_path / RUN_OUTPUT_DIR
+
     data_path = PROJECT_ROOT / base_config.data.dataset
     df = load_dataset(path=data_path)
 
@@ -84,50 +95,63 @@ def run_threshold_sweep(
         config=base_config.data.clip,
     )
 
-    ### Training ###
+    ### Threshold Sweep ###
     for threshold in thresholds:
+        if not is_valid_threshold(y_train_clipped, threshold, min_samples=5):
+            log.warn("Skipping threshold=%d: not enough low/high samples.", threshold)
+            continue
+
         log.info("Training theshold=%d", threshold)
-        config = deepcopy(base_config)
-        config.run_name = f"threshold_{threshold}"
-        config.model.threshold = threshold
 
-        staged_model = StagedModel(config=config.model)
-        staged_model.fit(X_train=X_train_clipped, y_train=y_train_clipped)
+        try:
+            config = deepcopy(base_config)
+            config.run_name = f"threshold_{threshold}"
+            config.model.threshold = threshold
 
-        ### Prediction ###
-        pred_results = staged_model.predict_details(X=X_test_clipped)
+            ### Training ###
+            staged_model = StagedModel(config=config.model)
+            staged_model.fit(X_train=X_train_clipped, y_train=y_train_clipped)
 
-        ### Evaluation ###
-        eval_results = evaluate_staged_model(
-            y_true=y_test,
-            pred_results=pred_results,
-            threshold=config.model.threshold,
-        )
+            ### Prediction ###
+            pred_results = staged_model.predict_details(X=X_test_clipped)
 
-        figure_groups = create_evaluation_figures(
-            y_true=y_test,
-            pred_results=pred_results,
-            eval_results=eval_results,
-            threshold=config.model.threshold,
-        )
+            ### Evaluation ###
+            eval_results = evaluate_staged_model(
+                y_true=y_test,
+                pred_results=pred_results,
+                threshold=config.model.threshold,
+            )
 
-        ### Output ###
-        save_run_outputs(
-            output_path=RUNS_OUTPUT_PATH,
-            run_name=config.run_name,
-            eval_results=eval_results,
-            y_true=y_test,
-            pred_results=pred_results,
-            run_config=config,
-            figure_groups=figure_groups,
-        )
+            figure_groups = create_evaluation_figures(
+                y_true=y_test,
+                pred_results=pred_results,
+                eval_results=eval_results,
+                threshold=config.model.threshold,
+            )
+
+            ### Output ###
+            save_run_outputs(
+                output_path=runs_output_path,
+                run_name=config.run_name,
+                eval_results=eval_results,
+                y_true=y_test,
+                pred_results=pred_results,
+                run_config=config,
+                figure_groups=figure_groups,
+            )
+
+        except ValueError as e:
+            log.warn("Skipping threshold=%d: %s", threshold, e)
+            continue
+
+    log.info(f"outputting to {output_path}")
 
     save_experiment_config(
-        output_path=OUTPUT_PATH,
+        output_path=output_path,
         experiment_config=experiment_config
     )
 
-    analyze_sweep(experiment_path=OUTPUT_PATH)
+    analyze_sweep(experiment_path=output_path)
 
 
 def main() -> int:

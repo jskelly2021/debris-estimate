@@ -30,7 +30,7 @@ class StagedModel:
         X_train: pd.DataFrame,
         y_train: pd.Series
     ) -> None:
-        log.info("Training model...")
+        log.debug("Training model...")
         self.zero_pos_classifier = train_zero_pos_classifier(
             X_train=X_train,
             y_train=y_train,
@@ -57,7 +57,7 @@ class StagedModel:
         )
 
         self.is_fitted = True
-        log.info("Model training complete.")
+        log.debug("Model training complete.")
 
 
     def predict_details(

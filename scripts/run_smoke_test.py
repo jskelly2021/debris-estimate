@@ -28,17 +28,17 @@ OUTPUT_PATH = PROJECT_ROOT / OUTPUT_DIR / EXPERIMENT_NAME
 RUNS_OUTPUT_PATH = OUTPUT_PATH / RUN_OUTPUT_DIR
 ANALYSIS_OUTPUT_PATH = OUTPUT_PATH / ANALYSIS_OUTPUT_DIR
 
-setup_logger()
+DEFAULT_RUN_CONFIG = RunConfig(
+    run_name="run01",
+    data=H9_V6_DATA_CONFIG,
+    model=BASELINE_MODEL_CONFIG,
+)
+
+setup_logger(verbose=True)
 log = Log()
 
 
-def run_smoke_test():
-    config = RunConfig(
-        run_name="run01",
-        data=H9_V6_DATA_CONFIG,
-        model=BASELINE_MODEL_CONFIG,
-    )
-
+def run_smoke_test(config: RunConfig | None = DEFAULT_RUN_CONFIG):
     data_path = PROJECT_ROOT / config.data.dataset
     df = load_dataset(path=data_path)
 
@@ -116,11 +116,11 @@ def run_smoke_test():
 def main() -> int:
     try:
         run_smoke_test()
-        log.info("Smoke test completed successfully.")
+        log.info(f"{EXPERIMENT_NAME} completed successfully.")
         return 0
 
     except Exception as e:
-        log.error(f"Smoke test failed: {e}")
+        log.error(f"{EXPERIMENT_NAME} failed: {e}")
         return 1
 
 
