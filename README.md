@@ -28,6 +28,7 @@ src/debris_estimate/
   model/               # staged model API, training helpers, prediction routing
   evaluation/          # metrics, evaluation summaries, diagnostic plots
   data/                # dataset processing
+  sweep/               # sweep analysis logic and outputting
   config.py
   outputs.py
   presets.py
@@ -162,21 +163,50 @@ y_reg_true, y_reg_pred = preds.reg_pairs(y_true)
 
 ## Outputs
 
-Model runs write standardized artifacts under `outputs/`.
+### Run Outputs
+
+Each model run writes standardized artifacts under:
 
 ```text
-outputs/
-  experiment/
-    run/
-      config.json
-      metrics.json
-      predictions.csv
-      plots/
+outputs/<experiment>/runs/<run_id>/
 ```
 
-| File              | Description                                                                                                                                                                                                 |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `config.json`    | Stores the full `RunConfig` object, including run, preprocess, split, clip, and model config. JSON is used because it supports structured, nested run-level evaluation results.                          |
-| `metrics.json`    | Stores the full `EvaluationResults` object, including system, classifier, and regressor metrics. JSON is used because it supports structured, nested run-level evaluation results.                          |
-| `predictions.csv` | Stores one row per sample containing the ground-truth target, final prediction, and stage-specific predictions from the staged model. CSV is used for sample-level prediction data and downstream analysis. |
-| `plots/`           | Generated visualizations used for model evaluation and diagnostics, including regression and classification performance plots. |
+```text
+runXXX/
+  config.json
+  metrics.json
+  predictions.csv
+  plots/
+```
+
+| File              | Description |
+|-------------------|-------------|
+| `config.json` | Stores the complete `RunConfig` used to generate the run, including preprocessing, splitting, clipping, and model parameters. |
+| `metrics.json` | Stores the complete `EvaluationResults` object, including system-level, classifier, and regressor metrics. |
+| `predictions.csv` | Stores one row per sample containing the ground-truth target, final prediction, and stage-level model outputs. |
+| `plots/` | Run-level evaluation and diagnostic visualizations, including regression and classification performance plots. |
+
+---
+
+### Sweep Analysis Outputs
+
+Experiment sweeps generate aggregated analysis artifacts under:
+
+```text
+outputs/<experiment>/analysis/
+```
+
+```text
+analysis/
+  summary.csv
+  leaderboard.csv
+  best_run.json
+  plots/
+```
+
+| File | Description |
+|--------|-------------|
+| `summary.csv` | One row per run containing flattened configuration parameters and evaluation metrics. This file serves as the primary dataset for sweep analysis. |
+| `leaderboard.csv` | Runs ranked by the experiment's primary optimization metric (for example, MAE or R²). |
+| `best_run.json` | Metadata describing the top-ranked run, including its configuration, metrics, and output directory. |
+| `plots/` | Sweep-level visualizations comparing run performance across parameter values and configurations. |

@@ -121,10 +121,10 @@ def evaluate_staged_model(
     )
 
     return EvaluationResults(
-        system_metrics=system_metrics,
-        zero_pos_classifier_metrics=zero_pos_metrics,
-        tier_classifier_metrics=tier_metrics,
-        low_regressor_metrics=low_metrics,
-        high_regressor_metrics=high_metrics,
-        full_regressor_metrics=full_metrics
+        system=system_metrics,
+        zero_pos=zero_pos_metrics,
+        tier=tier_metrics,
+        low=low_metrics,
+        high=high_metrics,
+        full=full_metrics
     )

@@ -29,6 +29,7 @@ class ClipConfig:
 
 @dataclass
 class DataConfig:
+    dataset: str | None = None
     preprocess: PreprocessConfig = field(default_factory=PreprocessConfig)
     split: SplitConfig = field(default_factory=SplitConfig)
     clip: ClipConfig = field(default_factory=ClipConfig)
@@ -45,7 +46,14 @@ class ModelConfig:
 
 @dataclass
 class RunConfig:
-    experiment_name: str | None = None
     run_name: str | None = "run"
     data: DataConfig = field(default_factory=DataConfig)
     model: ModelConfig = field(default_factory=ModelConfig)
+
+
+@dataclass
+class ExperimentConfig:
+    experiment_name: str | None = None
+    primary_metric: str = "system_r2"
+    primary_metric_mode: str = "max"
+    swept_fields: list[str] | None = None

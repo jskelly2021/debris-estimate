@@ -8,7 +8,7 @@ from pathlib import Path
 from debris_estimate.logger import Log
 from debris_estimate.data import load_dataset
 from debris_estimate.config import PreprocessConfig
-from debris_estimate.presets import H9_V6_PREPROCESS_CONFIG
+from debris_estimate.presets import BASELINE_PREPROCESS_CONFIG
 
 log = Log()
 
@@ -22,7 +22,7 @@ def get_numeric_clip_candidates(
     df: pd.DataFrame,
     config: PreprocessConfig
 )-> list[str]:
-    df = df.drop(columns=config.drop_cols, errors="ignore")
+    # df = df.drop(columns=config.drop_cols, errors="ignore")
     numeric_cols = df.select_dtypes(include=["int64", "float64"]).columns
 
     return [
@@ -84,7 +84,7 @@ def run_feature_skew_analysis(args):
 
     output_path.mkdir(parents=True, exist_ok=True)
 
-    cols = get_numeric_clip_candidates(df, H9_V6_PREPROCESS_CONFIG)
+    cols = get_numeric_clip_candidates(df, BASELINE_PREPROCESS_CONFIG)
     summary = analyze_skew(df, cols)
     summary.to_csv(output_path / "feature_skew_summary.csv", index=False)
 

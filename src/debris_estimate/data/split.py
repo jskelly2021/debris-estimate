@@ -30,7 +30,7 @@ def split_data(
     X_test = X.loc[temp_idx]
     y_test = y.loc[temp_idx]
 
-    log.info(f"Split data into train and test sets with test size {config.test_size}.")
-    log.info(f"Train set shape: {X_train.shape}, Test set shape: {X_test.shape}.")
+    log.debug(f"Split data into train and test sets with test size {config.test_size}.")
+    log.debug(f"Train set shape: {X_train.shape}, Test set shape: {X_test.shape}.")
 
     return X_train, X_test, y_train, y_test

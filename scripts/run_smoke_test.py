@@ -1,10 +1,8 @@
 """Simple smoke test for staged_model. Performs a single run of the model."""
 
-import argparse
-
 from pathlib import Path
 from debris_estimate.logger import setup_logger, Log
-from debris_estimate.config import RunConfig
+from debris_estimate.config import RunConfig, ExperimentConfig
 from debris_estimate.presets import (
     H9_V6_DATA_CONFIG,
     BASELINE_MODEL_CONFIG,
@@ -18,32 +16,30 @@ from debris_estimate.data import (
 )
 from debris_estimate.model import StagedModel
 from debris_estimate.evaluation import create_evaluation_figures, evaluate_staged_model
-from debris_estimate.outputs import save_run_outputs
+from debris_estimate.outputs import save_run_outputs, save_experiment_config
+from debris_estimate.sweep import analyze_sweep
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = "outputs"
 EXPERIMENT_NAME = "smoke_test"
+RUN_OUTPUT_DIR = "runs"
+ANALYSIS_OUTPUT_DIR = "analysis"
 OUTPUT_PATH = PROJECT_ROOT / OUTPUT_DIR / EXPERIMENT_NAME
+RUNS_OUTPUT_PATH = OUTPUT_PATH / RUN_OUTPUT_DIR
+ANALYSIS_OUTPUT_PATH = OUTPUT_PATH / ANALYSIS_OUTPUT_DIR
 
-setup_logger()
+DEFAULT_RUN_CONFIG = RunConfig(
+    run_name="run01",
+    data=H9_V6_DATA_CONFIG,
+    model=BASELINE_MODEL_CONFIG,
+)
+
+setup_logger(verbose=True)
 log = Log()
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="Run a smoke test for the staged model.")
-    parser.add_argument("--data_path", type=str, default="data/h9_debrisv6.csv", help="Path to the input dataset.")
-    return parser.parse_args()
-
-
-def run_smoke_test(args):
-    config = RunConfig(
-        experiment_name=EXPERIMENT_NAME,
-        run_name="run",
-        data=H9_V6_DATA_CONFIG,
-        model=BASELINE_MODEL_CONFIG,
-    )
-
-    data_path = PROJECT_ROOT / args.data_path
+def run_smoke_test(config: RunConfig | None = DEFAULT_RUN_CONFIG):
+    data_path = PROJECT_ROOT / config.data.dataset
     df = load_dataset(path=data_path)
 
     ### Preprocessing ###
@@ -96,10 +92,8 @@ def run_smoke_test(args):
     )
 
     ### Output ###
-    log.info(f"Saving run outputs to {OUTPUT_PATH}...")
-
     save_run_outputs(
-        output_path=OUTPUT_PATH,
+        output_path=RUNS_OUTPUT_PATH,
         run_name=config.run_name,
         eval_results=eval_results,
         y_true=y_test,
@@ -108,17 +102,25 @@ def run_smoke_test(args):
         figure_groups=figure_groups,
     )
 
+    experiment_config = ExperimentConfig(
+            experiment_name=EXPERIMENT_NAME,
+            primary_metric="system_r2",
+            primary_metric_mode="max",
+            swept_fields=None,
+        )
+    save_experiment_config(output_path=OUTPUT_PATH, experiment_config=experiment_config)
+
+    analyze_sweep(experiment_path=OUTPUT_PATH)
+
 
 def main() -> int:
-    args = parse_args()
-
     try:
-        run_smoke_test(args)
-        log.info("Smoke test completed successfully.")
+        run_smoke_test()
+        log.info(f"{EXPERIMENT_NAME} completed successfully.")
         return 0
 
     except Exception as e:
-        log.error(f"Smoke test failed: {e}")
+        log.error(f"{EXPERIMENT_NAME} failed: {e}")
         return 1
 
 
