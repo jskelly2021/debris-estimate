@@ -29,19 +29,30 @@ OUTPUT_PATH = PROJECT_ROOT / OUTPUT_DIR / EXPERIMENT_NAME
 RUNS_OUTPUT_PATH = OUTPUT_PATH / RUN_OUTPUT_DIR
 ANALYSIS_OUTPUT_PATH = OUTPUT_PATH / ANALYSIS_OUTPUT_DIR
 
+DEFAULT_EXPERIMENT_CONFIG = ExperimentConfig(
+    experiment_name=EXPERIMENT_NAME,
+    primary_metric="system_r2",
+    primary_metric_mode="max",
+    swept_fields=["model.threshold"],
+)
+
+DEFAULT_RUN_CONFIG = RunConfig(
+    run_name="base",
+    data=H9_V6_DATA_CONFIG,
+    model=BASELINE_MODEL_CONFIG,
+)
+
+DEFAULT_THRESHOLDS = list(range(100, 1000, 100))
+
 setup_logger()
 log = Log()
 
 
-def run_threshold_sweep():
-    thresholds = list(range(290, 351, 2))
-
-    base_config = RunConfig(
-        run_name="base",
-        data=H9_V6_DATA_CONFIG,
-        model=BASELINE_MODEL_CONFIG,
-    )
-
+def run_threshold_sweep(
+    base_config: RunConfig | None = DEFAULT_RUN_CONFIG,
+    experiment_config: ExperimentConfig | None = DEFAULT_EXPERIMENT_CONFIG,
+    thresholds: list[int] | None = DEFAULT_THRESHOLDS,
+):
     data_path = PROJECT_ROOT / base_config.data.dataset
     df = load_dataset(path=data_path)
 
@@ -111,12 +122,6 @@ def run_threshold_sweep():
             figure_groups=figure_groups,
         )
 
-    experiment_config = ExperimentConfig(
-        experiment_name=EXPERIMENT_NAME,
-        primary_metric="system_r2",
-        primary_metric_mode="max",
-        swept_fields=["model.threshold"],
-    )
     save_experiment_config(
         output_path=OUTPUT_PATH,
         experiment_config=experiment_config
@@ -128,11 +133,11 @@ def run_threshold_sweep():
 def main() -> int:
     try:
         run_threshold_sweep()
-        log.info("threshold sweep completed successfully.")
+        log.info(f"{EXPERIMENT_NAME} completed successfully.")
         return 0
 
     except Exception as e:
-        log.error(f"threshold sweep failed: {e}")
+        log.error(f"{EXPERIMENT_NAME} failed: {e}")
         return 1
 
 

@@ -79,7 +79,7 @@ H9_V6_DATA_CONFIG = DataConfig(
 
 
 H8_V3_DATA_CONFIG = DataConfig(
-    dataset="data/GrideH8_v3.csv",
+    dataset="data/h8_debrisv3.csv",
     preprocess = H8_V3_PREPROCESS_CONFIG,
     split = BASELINE_SPLIT_CONFIG,
     clip = BASELINE_CLIP_CONFIG,
