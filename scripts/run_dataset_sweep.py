@@ -14,12 +14,11 @@ from debris_estimate.model import StagedModel
 from debris_estimate.evaluation import create_evaluation_figures, evaluate_staged_model
 from debris_estimate.outputs import save_run_outputs, save_experiment_config
 from debris_estimate.sweep import analyze_sweep
-from presets.baseline import (
-    H9_V6_RUN_CONFIG,
-    H8_V3_RUN_CONFIG,
-    GH9_V3_RUN_CONFIG,
-    GH8_V3_RUN_CONFIG,
-)
+
+import config_presets.gh8_v3 as gh8_v3_config
+import config_presets.gh9_v3 as gh9_v3_config
+import config_presets.h8_v3 as h8_v3_config
+import config_presets.h9_v6 as h9_v6_config
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = "outputs"
@@ -30,11 +29,11 @@ OUTPUT_PATH = PROJECT_ROOT / OUTPUT_DIR / EXPERIMENT_NAME
 RUNS_OUTPUT_PATH = OUTPUT_PATH / RUN_OUTPUT_DIR
 ANALYSIS_OUTPUT_PATH = OUTPUT_PATH / ANALYSIS_OUTPUT_DIR
 
-run_configs = [
-    H9_V6_RUN_CONFIG,
-    H8_V3_RUN_CONFIG,
-    GH9_V3_RUN_CONFIG,
-    GH8_V3_RUN_CONFIG,
+configs = [
+    gh8_v3_config,
+    gh9_v3_config,
+    h8_v3_config,
+    h9_v6_config,
 ]
 
 setup_logger()
@@ -52,39 +51,40 @@ def run_dataset_sweep(
     experiment_config: ExperimentConfig | None = DEFAULT_EXPERIMENT_CONFIG,
 ):
     ### Dataset Sweep ###
-    for config in run_configs:
-        data_path = PROJECT_ROOT / config.data.dataset
+    for config in configs:
+        run_config = config.build_run_config()
+        data_path = PROJECT_ROOT / run_config.data.dataset
         df = load_dataset(path=data_path)
 
         ### Preprocessing ###
         X = preprocess_features(
             df=df,
-            config=config.data.preprocess,
+            config=run_config.data.preprocess,
         )
-        y = df["VolBoth_sum"]
+        y = df[run_config.data.preprocess.target_col]
 
         ### Splitting ###
         X_train, X_test, y_train, y_test = split_data(
             X=X,
             y=y,
-            config=config.data.split,
+            config=run_config.data.split,
         )
 
         ### Clipping ###
         X_train_clipped, X_test_clipped = clip_features(
             X_train=X_train,
             X_test=X_test,
-            exclude_cols=config.data.preprocess.exclude_clip_cols,
-            config=config.data.clip,
+            exclude_cols=run_config.data.preprocess.exclude_clip_cols,
+            config=run_config.data.clip,
         )
 
         y_train_clipped, _, _, _ = clip_targets(
             y=y_train,
-            config=config.data.clip,
+            config=run_config.data.clip,
         )
 
         ### Training ###
-        staged_model = StagedModel(config=config.model)
+        staged_model = StagedModel(config=run_config.model)
         staged_model.fit(X_train=X_train_clipped, y_train=y_train_clipped)
 
         ### Prediction ###
@@ -94,24 +94,24 @@ def run_dataset_sweep(
         eval_results = evaluate_staged_model(
             y_true=y_test,
             pred_results=pred_results,
-            threshold=config.model.threshold,
+            threshold=run_config.model.threshold,
         )
 
         figure_groups = create_evaluation_figures(
             y_true=y_test,
             pred_results=pred_results,
             eval_results=eval_results,
-            threshold=config.model.threshold,
+            threshold=run_config.model.threshold,
         )
 
         ### Output ###
         save_run_outputs(
             output_path=RUNS_OUTPUT_PATH,
-            run_name=config.run_name,
+            run_name=run_config.run_name,
             eval_results=eval_results,
             y_true=y_test,
             pred_results=pred_results,
-            run_config=config,
+            run_config=run_config,
             figure_groups=figure_groups,
         )
 

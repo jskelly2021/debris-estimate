@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 
 @dataclass
 class PreprocessConfig:
+    target_col: str | None = None
     drop_cols: list[str] = field(default_factory=list)
     log_cols: list[str] = field(default_factory=list)
     categorical_cols: list[str] = field(default_factory=list)

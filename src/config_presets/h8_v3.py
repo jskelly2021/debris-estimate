@@ -1,4 +1,4 @@
-import presets.baseline as baseline
+import config_presets.baseline as baseline
 
 from pathlib import Path
 from debris_estimate.config import (
@@ -11,11 +11,12 @@ from debris_estimate.config import (
 )
 
 ### Dataset ###
-DATASET                 = "data/GrideH9_v3.csv"
+DATASET                 = "data/h8_debrisv3.csv"
 DATASET_NAME            = Path(DATASET).stem
 RUN_NAME                = f"{DATASET_NAME}_baseline"
 
 ### Preprocessing ###
+TARGET_COL              = baseline.TARGET_COL
 DROP_COLS               = baseline.DROP_COLS
 LOG_COLS                = baseline.LOG_COLS
 CATEGORICAL_COLS        = baseline.CATEGORICAL_COLS
@@ -29,7 +30,7 @@ TEST_SIZE               = 0.2
 SPLIT_RANDOM_STATE      = 42
 
 ### Clipping ###
-FEATURE_CLIP_PERCENTILE = 0.95
+FEATURE_CLIP_PERCENTILE = 0.99
 TARGET_CLIP_PERCENTILE  = 0.98
 
 ### Model Params ###
@@ -37,12 +38,13 @@ ZERO_POS_PARAMS         = baseline.ZERO_POS_PARAMS
 TIER_PARAMS             = baseline.TIER_PARAMS
 LOW_PARAMS              = baseline.LOW_PARAMS
 HIGH_PARAMS             = baseline.HIGH_PARAMS
-THRESHOLD               = 2000
+THRESHOLD               = 800
 
 
 ### Factories ###
 def build_preprocess_config() -> PreprocessConfig:
     return PreprocessConfig(
+        target_col=TARGET_COL,
         drop_cols=DROP_COLS,
         log_cols=LOG_COLS,
         categorical_cols=CATEGORICAL_COLS,
@@ -87,3 +89,4 @@ def build_run_config() -> RunConfig:
         data=build_data_config(),
         model=build_model_config(),
     )
+

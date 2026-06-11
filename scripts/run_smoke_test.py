@@ -3,7 +3,7 @@
 from pathlib import Path
 from debris_estimate.logger import setup_logger, Log
 from debris_estimate.config import RunConfig, ExperimentConfig
-from presets.baseline import (
+from config_presets.baseline import (
     H9_V6_RUN_CONFIG,
     H8_V3_RUN_CONFIG,
     H9_STP_V3_RUN_CONFIG,

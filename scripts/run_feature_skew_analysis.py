@@ -8,7 +8,7 @@ from pathlib import Path
 from debris_estimate.logger import Log
 from debris_estimate.data import load_dataset
 from debris_estimate.config import PreprocessConfig
-from presets.baseline import BASELINE_PREPROCESS_CONFIG
+from config_presets.baseline import BASELINE_PREPROCESS_CONFIG
 
 log = Log()
 
