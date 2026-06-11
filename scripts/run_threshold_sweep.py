@@ -17,14 +17,7 @@ from debris_estimate.model import StagedModel
 from debris_estimate.evaluation import create_evaluation_figures, evaluate_staged_model
 from debris_estimate.outputs import save_run_outputs, save_experiment_config
 from debris_estimate.sweep import analyze_sweep
-from config_presets.baseline import (
-    H9_V6_RUN_CONFIG,
-    H8_V3_RUN_CONFIG,
-    H9_STP_V3_RUN_CONFIG,
-    GH9_V3_RUN_CONFIG,
-    GH9_STP_V3_RUN_CONFIG,
-    GH8_V3_RUN_CONFIG,
-)
+from config_presets import ALL_PRESETS
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = "outputs"

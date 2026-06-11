@@ -118,6 +118,7 @@ def build_clip_config() -> ClipConfig:
 def build_data_config() -> DataConfig:
     return DataConfig(
         dataset=DATASET,
+        dataset_name=DATASET_NAME,
         preprocess=build_preprocess_config(),
         split=build_split_config(),
         clip=build_clip_config(),

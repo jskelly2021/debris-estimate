@@ -31,6 +31,7 @@ class ClipConfig:
 @dataclass
 class DataConfig:
     dataset: str | None = None
+    dataset_name: str | None = None
     preprocess: PreprocessConfig = field(default_factory=PreprocessConfig)
     split: SplitConfig = field(default_factory=SplitConfig)
     clip: ClipConfig = field(default_factory=ClipConfig)

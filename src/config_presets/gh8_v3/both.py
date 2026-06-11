@@ -11,12 +11,12 @@ from debris_estimate.config import (
 )
 
 ### Dataset ###
-DATASET                 = "data/h8_debrisv3.csv"
+DATASET                 = "data/GrideH8_v3.csv"
 DATASET_NAME            = Path(DATASET).stem
-RUN_NAME                = f"{DATASET_NAME}_baseline"
+RUN_NAME                = f"{DATASET_NAME}_both_baseline"
 
 ### Preprocessing ###
-TARGET_COL              = baseline.TARGET_COL
+TARGET_COL              = "VolBoth_sum"
 DROP_COLS               = baseline.DROP_COLS
 LOG_COLS                = baseline.LOG_COLS
 CATEGORICAL_COLS        = baseline.CATEGORICAL_COLS
@@ -31,7 +31,7 @@ SPLIT_RANDOM_STATE      = 42
 
 ### Clipping ###
 FEATURE_CLIP_PERCENTILE = 0.99
-TARGET_CLIP_PERCENTILE  = 0.98
+TARGET_CLIP_PERCENTILE  = 0.95
 
 ### Model Params ###
 ZERO_POS_PARAMS         = baseline.ZERO_POS_PARAMS
@@ -69,6 +69,7 @@ def build_clip_config() -> ClipConfig:
 def build_data_config() -> DataConfig:
     return DataConfig(
         dataset=DATASET,
+        dataset_name=DATASET_NAME,
         preprocess=build_preprocess_config(),
         split=build_split_config(),
         clip=build_clip_config(),
@@ -89,4 +90,3 @@ def build_run_config() -> RunConfig:
         data=build_data_config(),
         model=build_model_config(),
     )
-

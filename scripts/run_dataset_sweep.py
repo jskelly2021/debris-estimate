@@ -1,8 +1,10 @@
 """Dataset sweep for staged_model."""
 
+import pandas as pd
+
 from pathlib import Path
 from debris_estimate.logger import setup_logger, Log
-from debris_estimate.config import ExperimentConfig
+from debris_estimate.config import ExperimentConfig, RunConfig
 from debris_estimate.data import (
     load_dataset,
     preprocess_features,
@@ -15,10 +17,7 @@ from debris_estimate.evaluation import create_evaluation_figures, evaluate_stage
 from debris_estimate.outputs import save_run_outputs, save_experiment_config
 from debris_estimate.sweep import analyze_sweep
 
-import config_presets.gh8_v3 as gh8_v3_config
-import config_presets.gh9_v3 as gh9_v3_config
-import config_presets.h8_v3 as h8_v3_config
-import config_presets.h9_v6 as h9_v6_config
+from config_presets import ALL_PRESETS
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = "outputs"
@@ -28,13 +27,6 @@ ANALYSIS_OUTPUT_DIR = "analysis"
 OUTPUT_PATH = PROJECT_ROOT / OUTPUT_DIR / EXPERIMENT_NAME
 RUNS_OUTPUT_PATH = OUTPUT_PATH / RUN_OUTPUT_DIR
 ANALYSIS_OUTPUT_PATH = OUTPUT_PATH / ANALYSIS_OUTPUT_DIR
-
-configs = [
-    gh8_v3_config,
-    gh9_v3_config,
-    h8_v3_config,
-    h9_v6_config,
-]
 
 setup_logger()
 log = Log()
@@ -47,22 +39,16 @@ DEFAULT_EXPERIMENT_CONFIG = ExperimentConfig(
 )
 
 
-def run_dataset_sweep(
-    experiment_config: ExperimentConfig | None = DEFAULT_EXPERIMENT_CONFIG,
-):
-    ### Dataset Sweep ###
-    for config in configs:
-        run_config = config.build_run_config()
-        data_path = PROJECT_ROOT / run_config.data.dataset
-        df = load_dataset(path=data_path)
+def is_valid_threshold(y_train: pd.Series, threshold: float, min_samples: int = 5) -> bool:
+    y_pos = y_train[y_train > 0]
 
-        ### Preprocessing ###
-        X = preprocess_features(
-            df=df,
-            config=run_config.data.preprocess,
-        )
-        y = df[run_config.data.preprocess.target_col]
+    low_count = int((y_pos <= threshold).sum())
+    high_count = int((y_pos > threshold).sum())
 
+    return low_count >= min_samples and high_count >= min_samples
+
+
+def run_once(X: pd.Dataframe, y: pd.Series, run_config: RunConfig):
         ### Splitting ###
         X_train, X_test, y_train, y_test = split_data(
             X=X,
@@ -82,6 +68,14 @@ def run_dataset_sweep(
             y=y_train,
             config=run_config.data.clip,
         )
+
+        if not is_valid_threshold(y_train_clipped, run_config.model.threshold, min_samples=5):
+            raise ValueError(
+                f"Skipping | threshold={run_config.model.threshold} | "\
+                f"feature clip={run_config.data.clip.feature_clip_percentile} | "\
+                f"target clip={run_config.data.clip.target_clip_percentile} | "\
+                f"not enough low/high samples."
+            )
 
         ### Training ###
         staged_model = StagedModel(config=run_config.model)
@@ -114,6 +108,30 @@ def run_dataset_sweep(
             run_config=run_config,
             figure_groups=figure_groups,
         )
+
+
+def run_dataset_sweep(
+    experiment_config: ExperimentConfig | None = DEFAULT_EXPERIMENT_CONFIG,
+):
+    ### Dataset Sweep ###
+    for config in ALL_PRESETS:
+        run_config = config.build_run_config()
+        data_path = PROJECT_ROOT / run_config.data.dataset
+        df = load_dataset(path=data_path)
+
+        ### Preprocessing ###
+        X = preprocess_features(
+            df=df,
+            config=run_config.data.preprocess,
+        )
+
+        y = df[run_config.data.preprocess.target_col]
+
+        try:
+            run_once(X=X, y=y, run_config=run_config)
+        except Exception as e:
+            log.error(f"{run_config.run_name}: {e}")
+            continue
 
     save_experiment_config(
         output_path=OUTPUT_PATH,

@@ -3,14 +3,7 @@
 from pathlib import Path
 from debris_estimate.logger import setup_logger, Log
 from debris_estimate.config import RunConfig, ExperimentConfig
-from config_presets.baseline import (
-    H9_V6_RUN_CONFIG,
-    H8_V3_RUN_CONFIG,
-    H9_STP_V3_RUN_CONFIG,
-    GH9_V3_RUN_CONFIG,
-    GH9_STP_V3_RUN_CONFIG,
-    GH8_V3_RUN_CONFIG,
-)
+from config_presets import baseline
 from debris_estimate.data import (
     load_dataset,
     preprocess_features,
@@ -36,7 +29,7 @@ setup_logger(verbose=True)
 log = Log()
 
 
-def run_smoke_test(config: RunConfig | None = GH8_V3_RUN_CONFIG):
+def run_smoke_test(config: RunConfig | None = baseline.build_run_config()):
     data_path = PROJECT_ROOT / config.data.dataset
     df = load_dataset(path=data_path)
 
