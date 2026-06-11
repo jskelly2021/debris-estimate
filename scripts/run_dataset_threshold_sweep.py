@@ -5,7 +5,7 @@ from copy import deepcopy
 from run_threshold_sweep import run_threshold_sweep
 from debris_estimate.logger import setup_logger, Log
 from debris_estimate.config import RunConfig, ExperimentConfig
-from debris_estimate.presets import (
+from presets.baseline import (
     H9_V6_DATA_CONFIG,
     H8_V3_DATA_CONFIG,
     H9_STP_V3_DATA_CONFIG,

@@ -4,7 +4,7 @@ from pathlib import Path
 from copy import deepcopy
 from debris_estimate.logger import setup_logger, Log
 from debris_estimate.config import RunConfig, ExperimentConfig
-from debris_estimate.presets import (
+from presets.baseline import (
     H9_V6_DATA_CONFIG,
     BASELINE_MODEL_CONFIG,
 )
