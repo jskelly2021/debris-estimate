@@ -1,6 +1,6 @@
 from . import gh8_v3, gh9_v3, h8_v3, h9_v6
 
-ALL_PRESETS = [
+ALL = [
     *gh8_v3.PRESETS,
     *gh9_v3.PRESETS,
     *h8_v3.PRESETS,

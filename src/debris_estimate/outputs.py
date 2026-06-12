@@ -19,23 +19,6 @@ CONFIG_FILENAME = "config.json"
 PLOT_DIR = "plots"
 
 
-def _create_output_dir(
-    output_path: str | Path,
-    run_name: str | None = None
-) -> Path:
-    if run_name is None:
-        run_name = "run_" + pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")
-
-    output_dir = Path(output_path) / run_name
-
-    if output_dir.exists():
-        return output_dir
-
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    return output_dir
-
-
 def _to_serializable(obj) -> object:
     if is_dataclass(obj):
         return _to_serializable(asdict(obj))
@@ -120,20 +103,19 @@ def _save_config_json(
 
 
 def save_run_outputs(
-    output_path: Path  | None = None,
-    run_name: str | None = None,
+    output_path: Path,
     eval_results: EvaluationResults  | None = None,
     y_true: pd.Series | None = None,
     pred_results: PredictionResults | None = None,
     run_config: RunConfig  | None = None,
     figure_groups: dict[str, dict[str, plt.Figure]] | None = None,
 ) -> None:
-    output_dir_path = _create_output_dir(output_path, run_name=run_name)
+    output_path.mkdir(parents=True, exist_ok=True)
 
-    metrics_file_path = output_dir_path / METRICS_FILENAME
-    predictions_file_path = output_dir_path / PREDICTIONS_FILENAME
-    config_file_path = output_dir_path / CONFIG_FILENAME
-    plots_dir_path = output_dir_path / PLOT_DIR
+    metrics_file_path = output_path / METRICS_FILENAME
+    predictions_file_path = output_path / PREDICTIONS_FILENAME
+    config_file_path = output_path / CONFIG_FILENAME
+    plots_dir_path = output_path / PLOT_DIR
 
     if eval_results is not None:
         _save_metrics_json(eval_results=eval_results, file_path=metrics_file_path)
@@ -148,9 +130,9 @@ def save_run_outputs(
         _save_config_json(config=run_config, file_path=config_file_path)
 
 
-def save_experiment_config(
-    output_path: Path,
+def save_experiment_metadata(
     experiment_config: ExperimentConfig,
+    output_path: Path,
 ) -> None:
     output_path.mkdir(parents=True, exist_ok=True)
     file_path = output_path / EXPERIMENT_CONFIG_FILENAME

@@ -10,6 +10,8 @@ from debris_estimate.config import (
     RunConfig,
 )
 
+CONFIG_NAME             = "h9_v6_both"
+
 ### Dataset ###
 DATASET                 = "data/h9_debrisv6.csv"
 DATASET_NAME            = Path(DATASET).stem
@@ -30,8 +32,8 @@ TEST_SIZE               = 0.2
 SPLIT_RANDOM_STATE      = 42
 
 ### Clipping ###
-FEATURE_CLIP_PERCENTILE = 0.98
-TARGET_CLIP_PERCENTILE  = 1.0
+FCLIP = 0.98
+TCLIP  = 1.0
 
 ### Model Params ###
 ZERO_POS_PARAMS         = baseline.ZERO_POS_PARAMS
@@ -62,8 +64,8 @@ def build_split_config() -> SplitConfig:
 
 def build_clip_config() -> ClipConfig:
     return ClipConfig(
-        feature_clip_percentile=FEATURE_CLIP_PERCENTILE,
-        target_clip_percentile=TARGET_CLIP_PERCENTILE,
+        fclip=FCLIP,
+        tclip=TCLIP,
     )
 
 def build_data_config() -> DataConfig:

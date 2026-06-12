@@ -10,6 +10,8 @@ from debris_estimate.config import (
     RunConfig,
 )
 
+CONFIG_NAME             = "gh8_v3_both"
+
 ### Dataset ###
 DATASET                 = "data/GrideH8_v3.csv"
 DATASET_NAME            = Path(DATASET).stem
@@ -30,8 +32,8 @@ TEST_SIZE               = 0.2
 SPLIT_RANDOM_STATE      = 42
 
 ### Clipping ###
-FEATURE_CLIP_PERCENTILE = 0.99
-TARGET_CLIP_PERCENTILE  = 0.95
+FCLIP = 0.99
+TCLIP  = 0.95
 
 ### Model Params ###
 ZERO_POS_PARAMS         = baseline.ZERO_POS_PARAMS
@@ -62,8 +64,8 @@ def build_split_config() -> SplitConfig:
 
 def build_clip_config() -> ClipConfig:
     return ClipConfig(
-        feature_clip_percentile=FEATURE_CLIP_PERCENTILE,
-        target_clip_percentile=TARGET_CLIP_PERCENTILE,
+        fclip=FCLIP,
+        tclip=TCLIP,
     )
 
 def build_data_config() -> DataConfig:
@@ -87,6 +89,7 @@ def build_model_config() -> ModelConfig:
 def build_run_config() -> RunConfig:
     return RunConfig(
         run_name=RUN_NAME,
+        output_dir="runs",
         data=build_data_config(),
         model=build_model_config(),
     )

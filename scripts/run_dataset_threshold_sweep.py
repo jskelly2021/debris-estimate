@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from copy import deepcopy
-from run_threshold_sweep import run_threshold_sweep
+from scripts.threshold.run_threshold_sweep import run_threshold_sweep
 from debris_estimate.logger import setup_logger, Log
 from debris_estimate.config import RunConfig, ExperimentConfig
 from config_presets.baseline import (

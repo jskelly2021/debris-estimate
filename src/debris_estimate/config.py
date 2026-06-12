@@ -1,7 +1,8 @@
 """Define configuration dataclasses for the debris estimation pipeline"""
 
+from pathlib import Path
 from dataclasses import dataclass, field
-
+from typing import Any
 
 @dataclass
 class PreprocessConfig:
@@ -23,8 +24,8 @@ class SplitConfig:
 
 @dataclass
 class ClipConfig:
-    feature_clip_percentile: float | None = None
-    target_clip_percentile: float | None = None
+    fclip: float | None = None
+    tclip: float | None = None
     positive_only_target_clip: bool = True
 
 
@@ -48,14 +49,17 @@ class ModelConfig:
 
 @dataclass
 class RunConfig:
-    run_name: str | None = "run"
+    run_name: str
+    output_dir: str | Path = "outputs/runs"
     data: DataConfig = field(default_factory=DataConfig)
     model: ModelConfig = field(default_factory=ModelConfig)
 
 
 @dataclass
 class ExperimentConfig:
-    experiment_name: str | None = None
+    experiment_name: str
+    output_dir: str | Path = "outputs"
+    base_run_config: RunConfig = field(default_factory=RunConfig)
     primary_metric: str = "system_r2"
     primary_metric_mode: str = "max"
-    swept_fields: list[str] | None = None
+    swept_fields: dict[str, list[Any]] = field(default_factory=dict)

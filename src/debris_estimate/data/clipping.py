@@ -60,7 +60,7 @@ def clip_features(
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     feature_clip_caps = _fit_numeric_feature_clip_caps(
         X_train=X_train,
-        percentile=config.feature_clip_percentile,
+        percentile=config.fclip,
         exclude_cols=exclude_cols
     )
 
@@ -75,7 +75,7 @@ def clip_targets(
     y: pd.Series,
     config: ClipConfig,
 ) -> tuple[pd.Series, float, int, float]:
-    if not 0 < config.target_clip_percentile <= 1:
+    if not 0 < config.tclip <= 1:
         raise ValueError("target clip percentile must be between 0 and 1.")
 
     y_clipped = y.copy()
@@ -86,8 +86,8 @@ def clip_targets(
     quantile_values = y[y > 0] if config.positive_only_target_clip else y
 
     if not quantile_values.empty:
-        log.debug(f"Clipping training targets at {config.target_clip_percentile:.3f}")
-        upper = quantile_values.quantile(config.target_clip_percentile)
+        log.debug(f"Clipping training targets at {config.tclip:.3f}")
+        upper = quantile_values.quantile(config.tclip)
 
         clip_mask = y > upper
         n_clipped = int(clip_mask.sum())

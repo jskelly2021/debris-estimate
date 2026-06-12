@@ -17,7 +17,7 @@ from debris_estimate.evaluation import create_evaluation_figures, evaluate_stage
 from debris_estimate.outputs import save_run_outputs, save_experiment_config
 from debris_estimate.sweep import analyze_sweep
 
-from config_presets import ALL_PRESETS
+from config_presets import ALL
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = "outputs"
@@ -114,7 +114,7 @@ def run_dataset_sweep(
     experiment_config: ExperimentConfig | None = DEFAULT_EXPERIMENT_CONFIG,
 ):
     ### Dataset Sweep ###
-    for config in ALL_PRESETS:
+    for config in ALL:
         run_config = config.build_run_config()
         data_path = PROJECT_ROOT / run_config.data.dataset
         df = load_dataset(path=data_path)
