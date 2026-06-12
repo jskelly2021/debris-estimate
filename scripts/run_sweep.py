@@ -2,16 +2,14 @@ from __future__ import annotations
 
 from pathlib import Path
 from copy import deepcopy
-from enum import StrEnum
 from itertools import product
-from enum import StrEnum
 from typing import Any
 
 from debris_estimate.config import ExperimentConfig, RunConfig
 from debris_estimate.outputs import save_experiment_metadata
 from debris_estimate.logger import setup_logger, Log
 from debris_estimate.sweep import analyze_sweep
-from run_model import run_model
+from debris_estimate.run import run_model
 
 setup_logger(verbose=False)
 log = Log()
@@ -19,13 +17,6 @@ log = Log()
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 RUN_OUTPUT_DIR = "runs"
 ANALYSIS_OUTPUT_DIR = "analysis"
-
-class ReuseLevel(StrEnum):
-    NONE = "none"
-    DATA = "data"
-    PREPROCESSED = "preprocessed"
-    SPLIT = "split"
-    CLIPPED = "clipped"
 
 
 def format_value(value: object) -> str:
@@ -89,16 +80,26 @@ def run_sweep(experiment_config: ExperimentConfig) -> None:
         output_path=experiment_dir,
     )
 
+    log.info(f"Starting {experiment_config.experiment_name} sweep")
+
     run_configs = generate_run_configs(exp=experiment_config)
 
     for run_config in run_configs:
         try:
-            run_model(config=run_config, run_dir=runs_dir / run_config.run_name)
+            log.info(f"{run_config.run_name}")
+            run_model(
+                config=run_config,
+                run_dir=runs_dir / run_config.run_name,
+            )
         except Exception as e:
             log.error(f"{run_config.run_name}: {e}")
             continue
 
-    analyze_sweep(experiment_dir=experiment_dir, runs_dir=runs_dir, output_path=analysis_dir)
+    analyze_sweep(
+        experiment_dir=experiment_dir,
+        runs_dir=runs_dir,
+        output_path=analysis_dir
+    )
 
 
 def main() -> int:
@@ -106,7 +107,7 @@ def main() -> int:
 
     THRESHOLD_SWEEP = ExperimentConfig(
         experiment_name="baseline_threshold_sweep",
-        output_dir="outputs/theshold_sweeps",
+        output_dir="outputs/threshold_sweeps",
         base_run_config=baseline.build_run_config(),
         swept_fields={
             "model.threshold": [100, 250, 500, 750, 1000],
@@ -114,7 +115,7 @@ def main() -> int:
     )
 
     try:
-        run_sweep(experiment_config=THRESHOLD_SWEEP, reuse_level=ReuseLevel.CLIPPED)
+        run_sweep(experiment_config=THRESHOLD_SWEEP)
         log.info(f"Sweep completed successfully.")
         return 0
 

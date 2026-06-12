@@ -2,7 +2,6 @@
 import pandas as pd
 
 from pathlib import Path
-from debris_estimate.logger import setup_logger, Log
 from debris_estimate.config import RunConfig
 from debris_estimate.data import (
     load_dataset,
@@ -15,11 +14,7 @@ from debris_estimate.model import StagedModel
 from debris_estimate.evaluation import create_evaluation_figures, evaluate_staged_model
 from debris_estimate.outputs import save_run_outputs
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-
-
-setup_logger(verbose=False)
-log = Log()
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 def is_valid_threshold(y_train: pd.Series, threshold: float, min_samples: int = 5) -> bool:
@@ -104,23 +99,3 @@ def run_model(config: RunConfig, run_dir: Path) -> None:
         run_config=config,
         figure_groups=figure_groups,
     )
-
-
-def main() -> int:
-    import config_presets.baseline as baseline
-
-    config = baseline.build_run_config()
-    run_dir = PROJECT_ROOT / "outputs" / "run_model"
-
-    try:
-        run_model(config=config, run_dir=run_dir)
-        log.info(f"Model run completed successfully.")
-        return 0
-
-    except Exception as e:
-        log.error(f"Model run failed: {e}")
-        return 1
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
