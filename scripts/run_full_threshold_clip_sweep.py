@@ -4,10 +4,10 @@ from debris_estimate.logger import setup_logger, Log
 from debris_estimate.config import ExperimentConfig
 
 from run_sweep import run_sweep
-from config_presets import ALL
+from config_presets.h9_v6 import PRESETS
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-OUTPUT_DIR = "outputs/threshold_sweeps"
+OUTPUT_DIR = "outputs/threshold_clip_sweeps"
 
 
 setup_logger()
@@ -32,11 +32,13 @@ thresholds = {
     "h9_v6_vg":    [100, 150, 200, 225, 250, 275, 300, 350],
 }
 
+clips = [0.80, 0.85, 0.90, 0.95, 0.98, 0.99, 1.0]
 
-def run_full_threshold_sweep() -> tuple[int, int]:
+
+def run_full_threshold_clip_sweep() -> tuple[int, int]:
     count = 0
     success = 0
-    for preset in ALL:
+    for preset in PRESETS:
         name = preset.CONFIG_NAME
 
         if name not in thresholds:
@@ -51,6 +53,8 @@ def run_full_threshold_sweep() -> tuple[int, int]:
             base_run_config=preset.build_run_config(),
             swept_fields={
                 "model.threshold": thresholds[name],
+                "data.clip.fclip": clips,
+                "data.clip.tclip": clips,
             },
         )
 
@@ -66,8 +70,8 @@ def run_full_threshold_sweep() -> tuple[int, int]:
 
 def main() -> int:
     try:
-        count, success = run_full_threshold_sweep()
-        log.info(f"Finished threshold sweeps: {success}/{count} succeeded")
+        count, success = run_full_threshold_clip_sweep()
+        log.info(f"Finished sweeps: {success}/{count} succeeded")
         return 0
 
     except Exception as e:

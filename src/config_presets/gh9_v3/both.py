@@ -40,7 +40,7 @@ ZERO_POS_PARAMS         = baseline.ZERO_POS_PARAMS
 TIER_PARAMS             = baseline.TIER_PARAMS
 LOW_PARAMS              = baseline.LOW_PARAMS
 HIGH_PARAMS             = baseline.HIGH_PARAMS
-THRESHOLD               = 2000
+THRESHOLD               = 2250
 
 
 ### Factories ###

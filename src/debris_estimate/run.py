@@ -64,8 +64,8 @@ def run_model(config: RunConfig, run_dir: Path) -> None:
     if not is_valid_threshold(y_train_clipped, config.model.threshold, min_samples=5):
         raise ValueError(
             f"Skipping | threshold={config.model.threshold} | "\
-            f"feature clip={config.data.clip.feature_clip_percentile} | "\
-            f"target clip={config.data.clip.target_clip_percentile} | "\
+            f"feature clip={config.data.clip.fclip} | "\
+            f"target clip={config.data.clip.tclip} | "\
             f"not enough low/high samples."
         )
 

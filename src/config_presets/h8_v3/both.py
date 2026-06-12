@@ -33,14 +33,14 @@ SPLIT_RANDOM_STATE      = 42
 
 ### Clipping ###
 FCLIP = 0.99
-TCLIP  = 0.98
+TCLIP  = 0.99
 
 ### Model Params ###
 ZERO_POS_PARAMS         = baseline.ZERO_POS_PARAMS
 TIER_PARAMS             = baseline.TIER_PARAMS
 LOW_PARAMS              = baseline.LOW_PARAMS
 HIGH_PARAMS             = baseline.HIGH_PARAMS
-THRESHOLD               = 800
+THRESHOLD               = 300
 
 
 ### Factories ###
