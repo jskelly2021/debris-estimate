@@ -115,15 +115,10 @@ def _create_residual(
 
 
 def _create_feature_importance(
-    scores: dict[str, float],
+    df: pd.DataFrame,
     title: str = "Feature Importance Plot",
     top_n: int = 25,
 ) -> plt.Figure:
-    df = pd.DataFrame(
-        scores.items(),
-        columns=["feature", "importance"],
-    )
-
     df = (
         df.sort_values("importance", ascending=False)
         .head(top_n)
@@ -299,20 +294,20 @@ def _create_feature_importance_plots(
 ) -> dict[str, plt.Figure]:
     return {
         "zero_pos": _create_feature_importance(
-            scores=feature_importance_results.zero_pos,
-            title="Zero vs Positive Feature Importance",
+            feature_importance_results.zero_pos,
+            "Zero vs Positive Feature Importance",
         ),
         "tier": _create_feature_importance(
-            scores=feature_importance_results.tier,
-            title="Low vs High Tier Feature Importance",
+            feature_importance_results.tier,
+            "Tier Classifier Feature Importance",
         ),
         "low": _create_feature_importance(
-            scores=feature_importance_results.low,
-            title="Low Regressor Feature Importance",
+            feature_importance_results.low,
+            "Low Regressor Feature Importance",
         ),
         "high": _create_feature_importance(
-            scores=feature_importance_results.high,
-            title="High Regressor Feature Importance",
+            feature_importance_results.high,
+            "High Regressor Feature Importance",
         ),
     }
 

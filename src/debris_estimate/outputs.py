@@ -91,15 +91,7 @@ def _save_feature_importance_csv(
     }
 
     for model_name, scores in model_scores.items():
-        df = (
-            pd.DataFrame(
-                scores.items(),
-                columns=["feature", "importance"],
-            )
-            .sort_values("importance", ascending=False)
-        )
-
-        df.to_csv(output_path / f"{model_name}.csv", index=False)
+        scores.to_csv(output_path / f"{model_name}.csv", index=False)
 
 
 def _save_plots(

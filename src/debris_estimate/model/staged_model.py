@@ -87,14 +87,56 @@ class StagedModel:
         return pred_details.final_pred
 
 
-    def feature_importance(self, importance_type: str = "gain") -> FeatureImportanceResults:
+    def feature_importance(
+        self,
+        importance_type: str = "gain",
+    ) -> FeatureImportanceResults:
         if not self.is_fitted:
-            raise RuntimeError("Model must be fitted before extracting feature importances.")
+            raise RuntimeError(
+                "Model must be fitted before extracting feature importances."
+            )
 
         return FeatureImportanceResults(
-            zero_pos=self.zero_pos_classifier.get_booster().get_score(importance_type=importance_type),
-            tier=self.tier_classifier.get_booster().get_score(importance_type=importance_type),
-            low=self.low_regressor.get_booster().get_score(importance_type=importance_type),
-            high=self.high_regressor.get_booster().get_score(importance_type=importance_type),
+            zero_pos=_get_feature_importance_df(
+                self.zero_pos_classifier,
+                importance_type,
+            ),
+            tier=_get_feature_importance_df(
+                self.tier_classifier,
+                importance_type,
+            ),
+            low=_get_feature_importance_df(
+                self.low_regressor,
+                importance_type,
+            ),
+            high=_get_feature_importance_df(
+                self.high_regressor,
+                importance_type,
+            ),
             importance_type=importance_type,
         )
+
+
+def _get_feature_importance_df(
+    model,
+    importance_type: str,
+) -> pd.DataFrame:
+    scores = model.get_booster().get_score(
+        importance_type=importance_type
+    )
+
+    total = sum(scores.values())
+
+    rows = [
+        {
+            "feature": feature,
+            "importance": importance / total if total > 0 else importance,
+        }
+        for feature, importance in scores.items()
+    ]
+
+    return (
+        pd.DataFrame(rows)
+        .sort_values("importance", ascending=False)
+        .reset_index(drop=True)
+    )

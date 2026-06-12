@@ -37,8 +37,8 @@ class PredictionResults:
 
 @dataclass
 class FeatureImportanceResults:
-    zero_pos: dict[str, float]
-    tier: dict[str, float]
-    low: dict[str, float]
-    high: dict[str, float]
+    zero_pos: pd.DataFrame
+    tier: pd.DataFrame
+    low: pd.DataFrame
+    high: pd.DataFrame
     importance_type: str = "gain"
