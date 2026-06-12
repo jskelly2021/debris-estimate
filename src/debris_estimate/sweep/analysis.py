@@ -9,8 +9,6 @@ from debris_estimate.sweep.leaderboard import build_leaderboard
 from debris_estimate.sweep.plots import build_sweep_plots
 
 
-RUNS_DIR = "runs"
-ANALYSIS_DIR = "analysis"
 PLOTS_DIR = "plots"
 EXPERIMENT_CONFIG_FILENAME = "experiment.json"
 SUMMARY_FILENAME = "summary.csv"
@@ -22,19 +20,17 @@ def _load_json(path: Path) -> dict:
         return json.load(f)
 
 
-def analyze_sweep(experiment_path: Path) -> None:
-    experiment_config = ExperimentConfig(**_load_json(experiment_path / EXPERIMENT_CONFIG_FILENAME))
+def analyze_sweep(experiment_dir: Path, runs_dir: Path, output_path: Path) -> None:
+    experiment_config = ExperimentConfig(**_load_json(experiment_dir / EXPERIMENT_CONFIG_FILENAME))
 
-    runs_path = experiment_path / RUNS_DIR
-    analysis_path = experiment_path / ANALYSIS_DIR
-    analysis_path.mkdir(parents=True, exist_ok=True)
+    output_path.mkdir(parents=True, exist_ok=True)
 
     summary = build_summary(
-        runs_path=runs_path,
+        runs_path=runs_dir,
         swept_fields=experiment_config.swept_fields,
     )
 
-    summary_file_path = analysis_path / SUMMARY_FILENAME
+    summary_file_path = output_path / SUMMARY_FILENAME
     summary.to_csv(summary_file_path, index=False)
 
     leaderboard = build_leaderboard(
@@ -43,10 +39,10 @@ def analyze_sweep(experiment_path: Path) -> None:
         primary_metric=experiment_config.primary_metric,
         primary_metric_mode=experiment_config.primary_metric_mode,
     )
-    leaderboard_file_path = analysis_path / LEADERBOARD_FILENAME
+    leaderboard_file_path = output_path / LEADERBOARD_FILENAME
     leaderboard.to_csv(leaderboard_file_path, index=False)
 
-    plots_path = experiment_path / PLOTS_DIR
+    plots_path = output_path / PLOTS_DIR
     build_sweep_plots(
         summary=summary,
         swept_fields=experiment_config.swept_fields,

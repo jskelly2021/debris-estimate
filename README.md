@@ -21,18 +21,65 @@ pip install -e .
 
 ## Project Structure
 
-The repository is structured to separate preprocessing, splitting, modeling, evaluation, plotting, and experiment scripts into reusable modules under `src/`.
+The reusable pipeline lives under `src/`; executable experiment workflows live under `scripts/`.
 
 ```text
-src/debris_estimate/
-  model/               # staged model API, training helpers, prediction routing
-  evaluation/          # metrics, evaluation summaries, diagnostic plots
-  data/                # dataset processing
-  sweep/               # sweep analysis logic and outputting
-  config.py
-  outputs.py
-  presets.py
+src/
+  config_presets/        # baseline plus dataset/target-specific config factories
+  debris_estimate/
+    data/                 # loading, preprocessing, splitting, and clipping
+    evaluation/           # metrics and diagnostic plots
+    model/                # staged model training and prediction
+    sweep/                # sweep summaries, leaderboards, and plots
+    config.py             # pipeline configuration dataclasses
+    outputs.py            # run and experiment artifact writers
+    run.py                # reusable single-run workflow
+scripts/                  # sweep, smoke-test, and analysis entry points
+data/                     # input CSV datasets
+docs/                     # project notes and supporting documentation
 ```
+
+## Presets and Scripts
+
+Presets cover four datasets (`gh8_v3`, `gh9_v3`, `h8_v3`, and `h9_v6`) and three targets (`both`, `cd`, and `vg`). Each preset module exposes `build_run_config()`, which returns a fresh `RunConfig` with its dataset, target, clipping values, threshold, and model parameters.
+
+```python
+from pathlib import Path
+
+from config_presets.gh8_v3 import both
+from debris_estimate.run import run_model
+
+config = both.build_run_config()
+run_model(config, Path("outputs/runs") / config.run_name)
+```
+
+`config_presets` also exports `ALL`, `BOTH`, `CD`, and `VG` collections for running groups of presets.
+
+Sweeps use dotted configuration paths and evaluate the Cartesian product of their values:
+
+```python
+from config_presets.gh8_v3 import both
+from debris_estimate.config import ExperimentConfig
+from scripts.run_sweep import run_sweep
+
+run_sweep(ExperimentConfig(
+    experiment_name="gh8_v3_both_thresholds",
+    output_dir="outputs/threshold_sweeps",
+    base_run_config=both.build_run_config(),
+    swept_fields={"model.threshold": [500, 850, 1000]},
+))
+```
+
+Run scripts from the repository root after installing the package:
+
+| Script | Purpose |
+|--------|---------|
+| `run_sweep.py` | Example configurable threshold sweep and reusable sweep functions. |
+| `run_full_clip_sweep.py` | Sweep feature and target clipping across all presets. |
+| `run_full_threshold_sweep.py` | Sweep preset-specific tier thresholds across all presets. |
+| `run_full_threshold_clip_sweep.py` | Sweep thresholds and clipping values together across all presets. |
+| `run_skew_analysis.py` | Write numeric skew summaries and histograms for each dataset. |
+| `run_smoke_test.py` | Legacy end-to-end smoke workflow; it needs migration to the current output and sweep APIs. |
 
 ## Data Processing Flow
 
@@ -50,7 +97,7 @@ flowchart TD
     I --> J[One-hot encode categorical columns]
     J --> K[Processed feature matrix X]
 
-    C --> L[Select target y = VolBoth_sum]
+    C --> L[Select target y = target_col]
 
     K --> M[split_data]
     L --> M
@@ -76,7 +123,7 @@ flowchart TD
 
 1. The dataset is loaded from CSV into a raw DataFrame.
 2. Feature preprocessing is applied to create the model input matrix `X`.
-3. The target column `VolBoth_sum` is selected separately as `y`.
+3. The preset's configured target column is selected separately as `y`.
 4. The processed features and raw target are split into train/test sets using shared indices.
 5. Feature clipping caps are fit on `X_train` only, then applied to both `X_train` and `X_test`.
 6. Target clipping is fit and applied only to `y_train`.
@@ -163,50 +210,39 @@ y_reg_true, y_reg_pred = preds.reg_pairs(y_true)
 
 ## Outputs
 
+Single runs write to the directory passed to `run_model`. Sweeps write to:
+
+```text
+<output_dir>/<experiment_name>/
+  experiment.json
+  runs/
+    <run_id>/
+      config.json
+      metrics.json
+      predictions.csv
+      plots/
+  analysis/
+    summary.csv
+    leaderboard.csv
+    plots/
+```
+
 ### Run Outputs
-
-Each model run writes standardized artifacts under:
-
-```text
-outputs/<experiment>/runs/<run_id>/
-```
-
-```text
-runXXX/
-  config.json
-  metrics.json
-  predictions.csv
-  plots/
-```
 
 | File              | Description |
 |-------------------|-------------|
 | `config.json` | Stores the complete `RunConfig` used to generate the run, including preprocessing, splitting, clipping, and model parameters. |
 | `metrics.json` | Stores the complete `EvaluationResults` object, including system-level, classifier, and regressor metrics. |
 | `predictions.csv` | Stores one row per sample containing the ground-truth target, final prediction, and stage-level model outputs. |
-| `plots/` | Run-level evaluation and diagnostic visualizations, including regression and classification performance plots. |
-
----
+| `plots/` | Run-level evaluation and diagnostic visualizations. |
 
 ### Sweep Analysis Outputs
 
-Experiment sweeps generate aggregated analysis artifacts under:
-
-```text
-outputs/<experiment>/analysis/
-```
-
-```text
-analysis/
-  summary.csv
-  leaderboard.csv
-  best_run.json
-  plots/
-```
-
 | File | Description |
 |--------|-------------|
-| `summary.csv` | One row per run containing flattened configuration parameters and evaluation metrics. This file serves as the primary dataset for sweep analysis. |
-| `leaderboard.csv` | Runs ranked by the experiment's primary optimization metric (for example, MAE or R²). |
-| `best_run.json` | Metadata describing the top-ranked run, including its configuration, metrics, and output directory. |
-| `plots/` | Sweep-level visualizations comparing run performance across parameter values and configurations. |
+| `experiment.json` | The base run configuration, swept fields, and ranking settings. |
+| `summary.csv` | Flattened configuration values and metrics for each successful run. |
+| `leaderboard.csv` | Successful runs ranked by the configured primary metric and mode. |
+| `plots/` | Metric comparisons for each swept field. |
+
+Sweep run IDs include the index and swept values, for example `000_threshold_500_fclip_0p9`. A failed or invalid run is logged and skipped; analysis includes only runs that produced both `config.json` and `metrics.json`.

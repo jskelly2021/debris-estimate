@@ -1,3 +1,5 @@
+This is a historical notebook workflow, not the current packaged pipeline. See README for current behavior.
+
 # GridH9v3 Combined Notebook Summary
 
 This notebook builds and evaluates random forest models for predicting debris volume from the `GrideH9_v3.xlsx` dataset. The target variable is `VolBoth_sum`.

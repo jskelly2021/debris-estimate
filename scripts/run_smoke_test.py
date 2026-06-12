@@ -2,125 +2,31 @@
 
 from pathlib import Path
 from debris_estimate.logger import setup_logger, Log
-from debris_estimate.config import RunConfig, ExperimentConfig
-from debris_estimate.presets import (
-    H9_V6_DATA_CONFIG,
-    BASELINE_MODEL_CONFIG,
-)
-from debris_estimate.data import (
-    load_dataset,
-    preprocess_features,
-    split_data,
-    clip_features,
-    clip_targets,
-)
-from debris_estimate.model import StagedModel
-from debris_estimate.evaluation import create_evaluation_figures, evaluate_staged_model
-from debris_estimate.outputs import save_run_outputs, save_experiment_config
-from debris_estimate.sweep import analyze_sweep
+from debris_estimate.run import run_model
+from config_presets import baseline
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = "outputs"
 EXPERIMENT_NAME = "smoke_test"
-RUN_OUTPUT_DIR = "runs"
-ANALYSIS_OUTPUT_DIR = "analysis"
-OUTPUT_PATH = PROJECT_ROOT / OUTPUT_DIR / EXPERIMENT_NAME
-RUNS_OUTPUT_PATH = OUTPUT_PATH / RUN_OUTPUT_DIR
-ANALYSIS_OUTPUT_PATH = OUTPUT_PATH / ANALYSIS_OUTPUT_DIR
-
-DEFAULT_RUN_CONFIG = RunConfig(
-    run_name="run01",
-    data=H9_V6_DATA_CONFIG,
-    model=BASELINE_MODEL_CONFIG,
-)
 
 setup_logger(verbose=True)
 log = Log()
 
 
-def run_smoke_test(config: RunConfig | None = DEFAULT_RUN_CONFIG):
-    data_path = PROJECT_ROOT / config.data.dataset
-    df = load_dataset(path=data_path)
-
-    ### Preprocessing ###
-    X = preprocess_features(
-        df=df,
-        config=config.data.preprocess,
-    )
-
-    ### Splitting ###
-    y = df["VolBoth_sum"]
-
-    X_train, X_test, y_train, y_test = split_data(
-        X=X,
-        y=y,
-        config=config.data.split,
-    )
-
-    ### Clipping ###
-    X_train_clipped, X_test_clipped = clip_features(
-        X_train=X_train,
-        X_test=X_test,
-        exclude_cols=config.data.preprocess.exclude_clip_cols,
-        config=config.data.clip,
-    )
-
-    y_train_clipped, _, _, _ = clip_targets(
-        y=y_train,
-        config=config.data.clip,
-    )
-
-    ### Training ###
-    staged_model = StagedModel(config=config.model)
-    staged_model.fit(X_train=X_train_clipped, y_train=y_train_clipped)
-
-    ### Prediction ###
-    pred_results = staged_model.predict_details(X=X_test_clipped)
-
-    ### Evaluation ###
-    eval_results = evaluate_staged_model(
-        y_true=y_test,
-        pred_results=pred_results,
-        threshold=config.model.threshold,
-    )
-
-    figure_groups = create_evaluation_figures(
-        y_true=y_test,
-        pred_results=pred_results,
-        eval_results=eval_results,
-        threshold=config.model.threshold,
-    )
-
-    ### Output ###
-    save_run_outputs(
-        output_path=RUNS_OUTPUT_PATH,
-        run_name=config.run_name,
-        eval_results=eval_results,
-        y_true=y_test,
-        pred_results=pred_results,
-        run_config=config,
-        figure_groups=figure_groups,
-    )
-
-    experiment_config = ExperimentConfig(
-            experiment_name=EXPERIMENT_NAME,
-            primary_metric="system_r2",
-            primary_metric_mode="max",
-            swept_fields=None,
-        )
-    save_experiment_config(output_path=OUTPUT_PATH, experiment_config=experiment_config)
-
-    analyze_sweep(experiment_path=OUTPUT_PATH)
+def run_smoke_test():
+    run_config = baseline.build_run_config()
+    run_dir = PROJECT_ROOT / OUTPUT_DIR / EXPERIMENT_NAME
+    run_model(config=run_config, run_dir=run_dir)
 
 
 def main() -> int:
     try:
         run_smoke_test()
-        log.info(f"{EXPERIMENT_NAME} completed successfully.")
+        log.info(f"Smoke test completed successfully.")
         return 0
 
     except Exception as e:
-        log.error(f"{EXPERIMENT_NAME} failed: {e}")
+        log.error(f"Smoke test failed: {e}")
         return 1
 
 

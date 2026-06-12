@@ -2,15 +2,17 @@
 
 ## Planned
 
-- binary distance threshold
 - feature importance/reduction
+- Single regressor with tier feature vs separated tier regressors
+- binary distance threshold
 - oversampling tests
 - overfit analysis
-- Single regressor with tier feature vs seprated tier regressors
 
 ## Completed
 - train/test ratio
 - tier threshold
 - feature clipping
 - target clipping
-- dataset sweep
+- feature/target clipping grid
+- tier sweep
+- combined threshold/clipping sweep

@@ -9,15 +9,12 @@ from debris_estimate.config import SplitConfig
 
 log = Log()
 
-# Target can be a Series or DataFrame
-Target = Union[pd.Series, pd.DataFrame]
-
 
 def split_data(
     X: pd.DataFrame,
-    y: Target,
+    y: pd.Series,
     config: SplitConfig
-) -> tuple[pd.DataFrame, pd.DataFrame, Target, Target]:
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
     train_idx, temp_idx = train_test_split(
         X.index,
         test_size=config.test_size,
