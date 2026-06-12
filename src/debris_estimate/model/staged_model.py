@@ -5,7 +5,7 @@ import pandas as pd
 from debris_estimate.logger import Log
 from debris_estimate.config import ModelConfig
 from debris_estimate.model.predict import predict_staged_model
-from debris_estimate.model.results import PredictionResults
+from debris_estimate.model.results import PredictionResults, FeatureImportanceResults
 from debris_estimate.model.train import (
     train_zero_pos_classifier,
     train_tier_classifier,
@@ -85,3 +85,16 @@ class StagedModel:
 
         pred_details = self.predict_details(X)
         return pred_details.final_pred
+
+
+    def feature_importance(self, importance_type: str = "gain") -> FeatureImportanceResults:
+        if not self.is_fitted:
+            raise RuntimeError("Model must be fitted before extracting feature importances.")
+
+        return FeatureImportanceResults(
+            zero_pos=self.zero_pos_classifier.get_booster().get_score(importance_type=importance_type),
+            tier=self.tier_classifier.get_booster().get_score(importance_type=importance_type),
+            low=self.low_regressor.get_booster().get_score(importance_type=importance_type),
+            high=self.high_regressor.get_booster().get_score(importance_type=importance_type),
+            importance_type=importance_type,
+        )

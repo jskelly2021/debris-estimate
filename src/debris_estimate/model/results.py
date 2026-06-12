@@ -33,3 +33,12 @@ class PredictionResults:
     def reg_pairs(self, y_true: pd.Series) -> tuple[pd.Series, pd.Series]:
         mask = self.reg_pred.notna()
         return y_true.loc[mask], self.reg_pred.loc[mask]
+
+
+@dataclass
+class FeatureImportanceResults:
+    zero_pos: dict[str, float]
+    tier: dict[str, float]
+    low: dict[str, float]
+    high: dict[str, float]
+    importance_type: str = "gain"
