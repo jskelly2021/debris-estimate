@@ -90,7 +90,7 @@ def run_model(config: RunConfig, run_dir: Path) -> None:
         y_true=y_test,
         pred_results=pred_results,
         eval_results=eval_results,
-        # feature_importance_results=feature_importance_results,
+        feature_importance_results=feature_importance_results,
         threshold=config.model.threshold,
     )
 

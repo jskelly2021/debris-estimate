@@ -114,6 +114,35 @@ def _create_residual(
     return fig
 
 
+def _create_feature_importance(
+    scores: dict[str, float],
+    title: str = "Feature Importance Plot",
+    top_n: int = 25,
+) -> plt.Figure:
+    df = pd.DataFrame(
+        scores.items(),
+        columns=["feature", "importance"],
+    )
+
+    df = (
+        df.sort_values("importance", ascending=False)
+        .head(top_n)
+        .sort_values("importance", ascending=True)
+    )
+
+    fig_height = max(5, len(df) * 0.3)
+    fig, ax = plt.subplots(figsize=(8, fig_height))
+
+    ax.barh(df["feature"], df["importance"])
+
+    ax.set_title(title)
+    ax.set_xlabel("Importance")
+    ax.set_ylabel("Feature")
+
+    fig.tight_layout()
+    return fig
+
+
 def _create_confusion_plots(
     eval: EvaluationResults,
 ) -> dict[str, plt.Figure]:
@@ -265,8 +294,27 @@ def _create_residual_plots(
     return figs
 
 
-def _create_feature_importance_plots(feature_importance_results: FeatureImportanceResults):
-    pass
+def _create_feature_importance_plots(
+    feature_importance_results: FeatureImportanceResults,
+) -> dict[str, plt.Figure]:
+    return {
+        "zero_pos": _create_feature_importance(
+            scores=feature_importance_results.zero_pos,
+            title="Zero vs Positive Feature Importance",
+        ),
+        "tier": _create_feature_importance(
+            scores=feature_importance_results.tier,
+            title="Low vs High Tier Feature Importance",
+        ),
+        "low": _create_feature_importance(
+            scores=feature_importance_results.low,
+            title="Low Regressor Feature Importance",
+        ),
+        "high": _create_feature_importance(
+            scores=feature_importance_results.high,
+            title="High Regressor Feature Importance",
+        ),
+    }
 
 
 def create_evaluation_figures(
