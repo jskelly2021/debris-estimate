@@ -6,12 +6,13 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from sklearn.metrics import ConfusionMatrixDisplay, RocCurveDisplay, PrecisionRecallDisplay
 from debris_estimate.evaluation.results import EvaluationResults
-from debris_estimate.model import PredictionResults
+from debris_estimate.model import PredictionResults, FeatureImportanceResults
 
 CONFUSION_MATRIX = "confusion_matrix"
 CLASSIFICATION_CURVES = "classification_curves"
 ACTUAL_VS_PREDICTED = "actual_vs_predicted"
 RESIDUAL = "residual"
+FEATURE_IMPORTANCE = "feature_importance"
 
 
 def _create_confusion_matrix(
@@ -264,17 +265,30 @@ def _create_residual_plots(
     return figs
 
 
+def _create_feature_importance_plots(feature_importance_results: FeatureImportanceResults):
+    pass
+
+
 def create_evaluation_figures(
     y_true: pd.Series,
-    pred_results: PredictionResults,
-    eval_results: EvaluationResults,
-    threshold: float,
+    pred_results: PredictionResults | None = None,
+    eval_results: EvaluationResults | None = None,
+    feature_importance_results: FeatureImportanceResults | None = None,
+    threshold: float | None = 1.0,
 ) -> dict[str, dict[str, plt.Figure]]:
     figure_groups: dict[str, dict[str, plt.Figure]] = {}
 
-    figure_groups[CONFUSION_MATRIX] = _create_confusion_plots(eval_results)
-    figure_groups[CLASSIFICATION_CURVES] = _create_classification_curve_plots(y_true, pred_results, threshold)
-    figure_groups[ACTUAL_VS_PREDICTED] = _create_actual_vs_predicted_plots(y_true, pred_results)
-    figure_groups[RESIDUAL] = _create_residual_plots(y_true, pred_results)
+    if eval_results is not None:
+        figure_groups[CONFUSION_MATRIX] = _create_confusion_plots(eval_results)
+
+    if pred_results is not None:
+        figure_groups[ACTUAL_VS_PREDICTED] = _create_actual_vs_predicted_plots(y_true, pred_results)
+        figure_groups[RESIDUAL] = _create_residual_plots(y_true, pred_results)
+
+        if threshold is not None:
+            figure_groups[CLASSIFICATION_CURVES] = _create_classification_curve_plots(y_true, pred_results, threshold)
+
+    if feature_importance_results is not None:
+        figure_groups[FEATURE_IMPORTANCE] = _create_feature_importance_plots(feature_importance_results)
 
     return figure_groups

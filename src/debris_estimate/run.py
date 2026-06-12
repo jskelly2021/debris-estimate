@@ -73,6 +73,9 @@ def run_model(config: RunConfig, run_dir: Path) -> None:
     staged_model = StagedModel(config=config.model)
     staged_model.fit(X_train=X_train_clipped, y_train=y_train_clipped)
 
+    ### Feature Importance ###
+    feature_importance_results = staged_model.feature_importance(importance_type="gain")
+
     ### Prediction ###
     pred_results = staged_model.predict_details(X=X_test_clipped)
 
@@ -87,6 +90,7 @@ def run_model(config: RunConfig, run_dir: Path) -> None:
         y_true=y_test,
         pred_results=pred_results,
         eval_results=eval_results,
+        # feature_importance_results=feature_importance_results,
         threshold=config.model.threshold,
     )
 
@@ -96,6 +100,7 @@ def run_model(config: RunConfig, run_dir: Path) -> None:
         eval_results=eval_results,
         y_true=y_test,
         pred_results=pred_results,
+        feature_importance_results=feature_importance_results,
         run_config=config,
         figure_groups=figure_groups,
     )
