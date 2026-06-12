@@ -13,4 +13,6 @@
 - tier threshold
 - feature clipping
 - target clipping
-- dataset sweep
+- feature/target clipping grid
+- tier sweep
+- combined threshold/clipping sweep

@@ -4,7 +4,7 @@ from debris_estimate.logger import setup_logger, Log
 from debris_estimate.config import ExperimentConfig
 
 from run_sweep import run_sweep
-from config_presets.h9_v6 import PRESETS
+from config_presets import ALL
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = "outputs/threshold_clip_sweeps"
@@ -38,7 +38,7 @@ clips = [0.80, 0.85, 0.90, 0.95, 0.98, 0.99, 1.0]
 def run_full_threshold_clip_sweep() -> tuple[int, int]:
     count = 0
     success = 0
-    for preset in PRESETS:
+    for preset in ALL:
         name = preset.CONFIG_NAME
 
         if name not in thresholds:
