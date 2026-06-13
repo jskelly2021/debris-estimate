@@ -292,24 +292,37 @@ def _create_residual_plots(
 def _create_feature_importance_plots(
     feature_importance_results: FeatureImportanceResults,
 ) -> dict[str, plt.Figure]:
-    return {
-        "zero_pos": _create_feature_importance(
+    plots = {}
+
+    plot_configs = {
+        "zero_pos": (
             feature_importance_results.zero_pos,
             "Zero vs Positive Feature Importance",
         ),
-        "tier": _create_feature_importance(
+        "tier": (
             feature_importance_results.tier,
             "Tier Classifier Feature Importance",
         ),
-        "low": _create_feature_importance(
+        "low": (
             feature_importance_results.low,
             "Low Regressor Feature Importance",
         ),
-        "high": _create_feature_importance(
+        "high": (
             feature_importance_results.high,
             "High Regressor Feature Importance",
         ),
     }
+
+    for name, (df, title) in plot_configs.items():
+        if df.empty:
+            continue
+
+        plots[name] = _create_feature_importance(
+            df,
+            title,
+        )
+
+    return plots
 
 
 def create_evaluation_figures(

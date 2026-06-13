@@ -117,6 +117,9 @@ class StagedModel:
         )
 
 
+FEATURE_IMPORTANCE_COLUMNS = ["feature", "importance"]
+
+
 def _get_feature_importance_df(
     model,
     importance_type: str,
@@ -124,6 +127,9 @@ def _get_feature_importance_df(
     scores = model.get_booster().get_score(
         importance_type=importance_type
     )
+
+    if not scores:
+        return pd.DataFrame(columns=FEATURE_IMPORTANCE_COLUMNS)
 
     total = sum(scores.values())
 
@@ -136,7 +142,7 @@ def _get_feature_importance_df(
     ]
 
     return (
-        pd.DataFrame(rows)
+        pd.DataFrame(rows, columns=FEATURE_IMPORTANCE_COLUMNS)
         .sort_values("importance", ascending=False)
         .reset_index(drop=True)
     )
