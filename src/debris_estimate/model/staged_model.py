@@ -5,7 +5,7 @@ import pandas as pd
 from debris_estimate.logger import Log
 from debris_estimate.config import ModelConfig
 from debris_estimate.model.predict import predict_staged_model
-from debris_estimate.model.results import PredictionResults
+from debris_estimate.model.results import PredictionResults, FeatureImportanceResults
 from debris_estimate.model.train import (
     train_zero_pos_classifier,
     train_tier_classifier,
@@ -85,3 +85,64 @@ class StagedModel:
 
         pred_details = self.predict_details(X)
         return pred_details.final_pred
+
+
+    def feature_importance(
+        self,
+        importance_type: str = "gain",
+    ) -> FeatureImportanceResults:
+        if not self.is_fitted:
+            raise RuntimeError(
+                "Model must be fitted before extracting feature importances."
+            )
+
+        return FeatureImportanceResults(
+            zero_pos=_get_feature_importance_df(
+                self.zero_pos_classifier,
+                importance_type,
+            ),
+            tier=_get_feature_importance_df(
+                self.tier_classifier,
+                importance_type,
+            ),
+            low=_get_feature_importance_df(
+                self.low_regressor,
+                importance_type,
+            ),
+            high=_get_feature_importance_df(
+                self.high_regressor,
+                importance_type,
+            ),
+            importance_type=importance_type,
+        )
+
+
+FEATURE_IMPORTANCE_COLUMNS = ["feature", "importance"]
+
+
+def _get_feature_importance_df(
+    model,
+    importance_type: str,
+) -> pd.DataFrame:
+    scores = model.get_booster().get_score(
+        importance_type=importance_type
+    )
+
+    if not scores:
+        return pd.DataFrame(columns=FEATURE_IMPORTANCE_COLUMNS)
+
+    total = sum(scores.values())
+
+    rows = [
+        {
+            "feature": feature,
+            "importance": importance / total if total > 0 else importance,
+        }
+        for feature, importance in scores.items()
+    ]
+
+    return (
+        pd.DataFrame(rows, columns=FEATURE_IMPORTANCE_COLUMNS)
+        .sort_values("importance", ascending=False)
+        .reset_index(drop=True)
+    )

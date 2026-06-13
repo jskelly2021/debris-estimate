@@ -9,13 +9,14 @@ from pathlib import Path
 from dataclasses import asdict, is_dataclass
 from debris_estimate.config import RunConfig, ExperimentConfig
 from debris_estimate.evaluation.results import EvaluationResults
-from debris_estimate.model import PredictionResults
+from debris_estimate.model import PredictionResults, FeatureImportanceResults
 
 
 EXPERIMENT_CONFIG_FILENAME = "experiment.json"
 METRICS_FILENAME = "metrics.json"
 PREDICTIONS_FILENAME = "predictions.csv"
 CONFIG_FILENAME = "config.json"
+FEATURE_IMPORTANCE_DIR = "feature_importance"
 PLOT_DIR = "plots"
 
 
@@ -76,6 +77,23 @@ def _save_predictions_csv(
     pred_df.to_csv(file_path, index=True, index_label="index")
 
 
+def _save_feature_importance_csv(
+    feature_importance_results: FeatureImportanceResults,
+    output_path: Path,
+) -> None:
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    model_scores = {
+        "zero_pos": feature_importance_results.zero_pos,
+        "tier": feature_importance_results.tier,
+        "low": feature_importance_results.low,
+        "high": feature_importance_results.high,
+    }
+
+    for model_name, scores in model_scores.items():
+        scores.to_csv(output_path / f"{model_name}.csv", index=False)
+
+
 def _save_plots(
     figure_groups: dict[str, dict[str, plt.Figure]],
     output_dir_path: Path
@@ -107,6 +125,7 @@ def save_run_outputs(
     eval_results: EvaluationResults  | None = None,
     y_true: pd.Series | None = None,
     pred_results: PredictionResults | None = None,
+    feature_importance_results: FeatureImportanceResults | None = None,
     run_config: RunConfig  | None = None,
     figure_groups: dict[str, dict[str, plt.Figure]] | None = None,
 ) -> None:
@@ -115,6 +134,7 @@ def save_run_outputs(
     metrics_file_path = output_path / METRICS_FILENAME
     predictions_file_path = output_path / PREDICTIONS_FILENAME
     config_file_path = output_path / CONFIG_FILENAME
+    feature_importance_path = output_path / FEATURE_IMPORTANCE_DIR
     plots_dir_path = output_path / PLOT_DIR
 
     if eval_results is not None:
@@ -122,6 +142,9 @@ def save_run_outputs(
 
     if pred_results is not None and y_true is not None:
         _save_predictions_csv(y_true=y_true, pred_results=pred_results, file_path=predictions_file_path)
+
+    if feature_importance_results is not None:
+        _save_feature_importance_csv(feature_importance_results=feature_importance_results, output_path=feature_importance_path)
 
     if figure_groups is not None:
         _save_plots(figure_groups=figure_groups, output_dir_path=plots_dir_path)

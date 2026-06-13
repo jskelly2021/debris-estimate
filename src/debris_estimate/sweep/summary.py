@@ -59,7 +59,6 @@ def build_summary(
 
         row = {
             "run_id": run_dir.name,
-            "run_path": str(run_dir),
         }
 
         for field in swept_fields:

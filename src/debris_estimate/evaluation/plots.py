@@ -6,12 +6,13 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from sklearn.metrics import ConfusionMatrixDisplay, RocCurveDisplay, PrecisionRecallDisplay
 from debris_estimate.evaluation.results import EvaluationResults
-from debris_estimate.model import PredictionResults
+from debris_estimate.model import PredictionResults, FeatureImportanceResults
 
 CONFUSION_MATRIX = "confusion_matrix"
 CLASSIFICATION_CURVES = "classification_curves"
 ACTUAL_VS_PREDICTED = "actual_vs_predicted"
 RESIDUAL = "residual"
+FEATURE_IMPORTANCE = "feature_importance"
 
 
 def _create_confusion_matrix(
@@ -108,6 +109,30 @@ def _create_residual(
     ax.set_title(title)
     ax.set_xlabel("Predicted")
     ax.set_ylabel("Residual (Actual - Predicted)")
+
+    fig.tight_layout()
+    return fig
+
+
+def _create_feature_importance(
+    df: pd.DataFrame,
+    title: str = "Feature Importance Plot",
+    top_n: int = 25,
+) -> plt.Figure:
+    df = (
+        df.sort_values("importance", ascending=False)
+        .head(top_n)
+        .sort_values("importance", ascending=True)
+    )
+
+    fig_height = max(5, len(df) * 0.3)
+    fig, ax = plt.subplots(figsize=(8, fig_height))
+
+    ax.barh(df["feature"], df["importance"])
+
+    ax.set_title(title)
+    ax.set_xlabel("Importance")
+    ax.set_ylabel("Feature")
 
     fig.tight_layout()
     return fig
@@ -264,17 +289,62 @@ def _create_residual_plots(
     return figs
 
 
+def _create_feature_importance_plots(
+    feature_importance_results: FeatureImportanceResults,
+) -> dict[str, plt.Figure]:
+    plots = {}
+
+    plot_configs = {
+        "zero_pos": (
+            feature_importance_results.zero_pos,
+            "Zero vs Positive Feature Importance",
+        ),
+        "tier": (
+            feature_importance_results.tier,
+            "Tier Classifier Feature Importance",
+        ),
+        "low": (
+            feature_importance_results.low,
+            "Low Regressor Feature Importance",
+        ),
+        "high": (
+            feature_importance_results.high,
+            "High Regressor Feature Importance",
+        ),
+    }
+
+    for name, (df, title) in plot_configs.items():
+        if df.empty:
+            continue
+
+        plots[name] = _create_feature_importance(
+            df,
+            title,
+        )
+
+    return plots
+
+
 def create_evaluation_figures(
     y_true: pd.Series,
-    pred_results: PredictionResults,
-    eval_results: EvaluationResults,
-    threshold: float,
+    pred_results: PredictionResults | None = None,
+    eval_results: EvaluationResults | None = None,
+    feature_importance_results: FeatureImportanceResults | None = None,
+    threshold: float | None = 1.0,
 ) -> dict[str, dict[str, plt.Figure]]:
     figure_groups: dict[str, dict[str, plt.Figure]] = {}
 
-    figure_groups[CONFUSION_MATRIX] = _create_confusion_plots(eval_results)
-    figure_groups[CLASSIFICATION_CURVES] = _create_classification_curve_plots(y_true, pred_results, threshold)
-    figure_groups[ACTUAL_VS_PREDICTED] = _create_actual_vs_predicted_plots(y_true, pred_results)
-    figure_groups[RESIDUAL] = _create_residual_plots(y_true, pred_results)
+    if eval_results is not None:
+        figure_groups[CONFUSION_MATRIX] = _create_confusion_plots(eval_results)
+
+    if pred_results is not None:
+        figure_groups[ACTUAL_VS_PREDICTED] = _create_actual_vs_predicted_plots(y_true, pred_results)
+        figure_groups[RESIDUAL] = _create_residual_plots(y_true, pred_results)
+
+        if threshold is not None:
+            figure_groups[CLASSIFICATION_CURVES] = _create_classification_curve_plots(y_true, pred_results, threshold)
+
+    if feature_importance_results is not None:
+        figure_groups[FEATURE_IMPORTANCE] = _create_feature_importance_plots(feature_importance_results)
 
     return figure_groups
